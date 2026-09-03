@@ -23,7 +23,8 @@ export default function Login() {
     try {
       const result = await loginRequest({ email, password })
       login(result)
-      navigate(location.state?.from?.pathname || '/dashboard', { replace: true })
+      const defaultPath = result.role === 'ADMIN' ? '/admin' : '/dashboard'
+      navigate(location.state?.from?.pathname || defaultPath, { replace: true })
     } catch (err) {
       setError(err?.response?.data?.message || 'Invalid email or password.')
     } finally {
