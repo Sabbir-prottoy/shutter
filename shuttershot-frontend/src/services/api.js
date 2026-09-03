@@ -40,4 +40,17 @@ export function getPhotographerReviews(id) {
   return api.get('/reviews', { params: { photographerId: id } }).then((res) => res.data)
 }
 
+// Booking (public, guest flow)
+export function createBooking(payload) {
+  return api.post('/bookings', payload).then((res) => res.data)
+}
+
+export function confirmBookingOtp(bookingId, otpCode) {
+  return api.post(`/bookings/${bookingId}/confirm-otp`, { otpCode }).then((res) => res.data)
+}
+
+export function resendOtp(contact) {
+  return api.post('/otp/send', { contact }).then((res) => res.data)
+}
+
 export default api

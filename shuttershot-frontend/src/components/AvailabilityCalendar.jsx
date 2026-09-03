@@ -20,7 +20,7 @@ function endOfMonth(date) {
   return new Date(date.getFullYear(), date.getMonth() + 1, 0)
 }
 
-export default function AvailabilityCalendar({ photographerId }) {
+export default function AvailabilityCalendar({ photographerId, selectedDate, onSelectDate }) {
   const [viewedMonth, setViewedMonth] = useState(() => startOfMonth(new Date()))
   const [statusByDate, setStatusByDate] = useState({})
   const [status, setStatus] = useState('loading')
@@ -100,18 +100,33 @@ export default function AvailabilityCalendar({ photographerId }) {
           const isPast = iso < today
           const explicitStatus = statusByDate[iso]
           const isFree = !explicitStatus || explicitStatus === 'FREE'
+          const isSelectable = Boolean(onSelectDate) && isFree && !isPast
+          const isSelected = selectedDate === iso
+
+          const baseClass =
+            'flex aspect-square items-center justify-center rounded-[4px] text-sm transition-shadow duration-200'
+          const stateClass = isPast
+            ? 'text-ink-muted/40'
+            : isFree
+              ? 'bg-free/20 text-ink hover:shadow-[0_0_0_3px_rgba(193,90,58,0.15)]'
+              : 'bg-booked/25 text-ink hover:shadow-[0_0_0_3px_rgba(193,90,58,0.15)]'
+          const selectedClass = isSelected ? 'ring-2 ring-accent' : ''
+
+          if (isSelectable) {
+            return (
+              <button
+                key={iso}
+                type="button"
+                onClick={() => onSelectDate(iso)}
+                className={`${baseClass} ${stateClass} ${selectedClass} cursor-pointer`}
+              >
+                {date.getDate()}
+              </button>
+            )
+          }
 
           return (
-            <div
-              key={iso}
-              className={`flex aspect-square items-center justify-center rounded-[4px] text-sm transition-shadow duration-200 ${
-                isPast
-                  ? 'text-ink-muted/40'
-                  : isFree
-                    ? 'bg-free/20 text-ink hover:shadow-[0_0_0_3px_rgba(193,90,58,0.15)]'
-                    : 'bg-booked/25 text-ink hover:shadow-[0_0_0_3px_rgba(193,90,58,0.15)]'
-              }`}
-            >
+            <div key={iso} className={`${baseClass} ${stateClass} ${selectedClass}`}>
               {date.getDate()}
             </div>
           )
