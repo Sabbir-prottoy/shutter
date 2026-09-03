@@ -56,6 +56,25 @@ export function getPhotographerReviews(id) {
   return api.get('/reviews', { params: { photographerId: id } }).then((res) => res.data)
 }
 
+// Portfolio (photographer dashboard, own images)
+export function getMyPortfolio() {
+  return api.get('/portfolio').then((res) => res.data)
+}
+
+export function uploadPortfolioImage(file, category) {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('category', category)
+  // No explicit Content-Type here — axios/the browser sets the multipart
+  // boundary automatically for FormData; overriding it manually drops the
+  // boundary parameter and breaks the upload.
+  return api.post('/portfolio', formData).then((res) => res.data)
+}
+
+export function deletePortfolioImage(id) {
+  return api.delete(`/portfolio/${id}`).then((res) => res.data)
+}
+
 // Booking (public, guest flow)
 export function createBooking(payload) {
   return api.post('/bookings', payload).then((res) => res.data)
