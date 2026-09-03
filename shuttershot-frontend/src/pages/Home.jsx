@@ -3,20 +3,43 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import SearchBar from '../components/SearchBar'
 import PhotographerCard from '../components/PhotographerCard'
-import { searchPhotographers } from '../services/api'
+import { getPhotographerPortfolio, searchPhotographers } from '../services/api'
+
+// Local fallback for when no verified portfolio photos exist yet (e.g. a
+// fresh install). A real public-domain photographer-in-action shot, not a
+// themed placeholder — see hero-photographer.jpg's source in the repo notes.
+const FALLBACK_HERO_IMAGE = '/hero-photographer.jpg'
+
+// How many featured photographers to check for a portfolio photo before
+// giving up and using the fallback. Fetched in parallel, so this can be
+// generous without turning into a slow waterfall on page load.
+const MAX_PHOTOGRAPHERS_TO_CHECK = 20
 
 export default function Home() {
   const [photographers, setPhotographers] = useState([])
   const [status, setStatus] = useState('loading')
+  const [heroImage, setHeroImage] = useState(FALLBACK_HERO_IMAGE)
 
   useEffect(() => {
     let cancelled = false
 
     searchPhotographers()
-      .then((data) => {
-        if (!cancelled) {
-          setPhotographers(data)
-          setStatus('ready')
+      .then(async (data) => {
+        if (cancelled) return
+        setPhotographers(data)
+        setStatus('ready')
+
+        const candidates = data.slice(0, MAX_PHOTOGRAPHERS_TO_CHECK)
+        const results = await Promise.allSettled(
+          candidates.map((photographer) => getPhotographerPortfolio(photographer.id)),
+        )
+        if (cancelled) return
+
+        const firstWithPhoto = results.find(
+          (result) => result.status === 'fulfilled' && result.value.length > 0,
+        )
+        if (firstWithPhoto) {
+          setHeroImage(firstWithPhoto.value[0].imageUrl)
         }
       })
       .catch(() => {
@@ -35,7 +58,7 @@ export default function Home() {
       <section className="grid flex-1 lg:grid-cols-[1.1fr_1fr]">
         <div className="hidden lg:block">
           <img
-            src="https://picsum.photos/seed/shuttershot-hero/1200/1400"
+            src={heroImage}
             alt=""
             className="h-full max-h-[640px] w-full object-cover"
           />
