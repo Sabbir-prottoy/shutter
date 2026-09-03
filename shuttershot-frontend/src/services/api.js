@@ -114,4 +114,13 @@ export function resendOtp(contact) {
   return api.post('/otp/send', { contact }).then((res) => res.data)
 }
 
+// Bookings (photographer dashboard, own bookings)
+export function getMyBookings(photographerId) {
+  return api.get('/bookings', { params: { photographerId } }).then((res) => res.data)
+}
+
+export function updateBookingStatus(id, status) {
+  return api.put(`/bookings/${id}/status`, { status }).then((res) => res.data)
+}
+
 export default api
