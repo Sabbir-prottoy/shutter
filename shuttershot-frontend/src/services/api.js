@@ -123,4 +123,45 @@ export function updateBookingStatus(id, status) {
   return api.put(`/bookings/${id}/status`, { status }).then((res) => res.data)
 }
 
+// Admin (requires ROLE_ADMIN)
+export function getPendingReviews() {
+  return api.get('/admin/reviews/pending').then((res) => res.data)
+}
+
+export function approveReview(id) {
+  return api.put(`/admin/reviews/${id}/approve`).then((res) => res.data)
+}
+
+export function rejectReview(id) {
+  return api.put(`/admin/reviews/${id}/reject`).then((res) => res.data)
+}
+
+export function getFlaggedPhotos() {
+  return api.get('/admin/photos/flagged').then((res) => res.data)
+}
+
+export function verifyPhoto(id) {
+  return api.put(`/admin/photos/${id}/verify`).then((res) => res.data)
+}
+
+export function rejectPhoto(id) {
+  return api.put(`/admin/photos/${id}/reject`).then((res) => res.data)
+}
+
+export function getAdminUsers(role) {
+  return api.get('/admin/users', { params: { role } }).then((res) => res.data)
+}
+
+export function verifyUser(id) {
+  return api.put(`/admin/users/${id}/verify`).then((res) => res.data)
+}
+
+export function banUser(id) {
+  return api.put(`/admin/users/${id}/ban`).then((res) => res.data)
+}
+
+export function unbanUser(id) {
+  return api.put(`/admin/users/${id}/unban`).then((res) => res.data)
+}
+
 export default api

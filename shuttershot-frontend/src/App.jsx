@@ -11,11 +11,13 @@ import BookingRequests from './pages/BookingRequests'
 import AdminPanel from './pages/AdminPanel/AdminPanel'
 import ReviewModeration from './pages/AdminPanel/ReviewModeration'
 import PhotoModeration from './pages/AdminPanel/PhotoModeration'
+import UserManagement from './pages/AdminPanel/UserManagement'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 import DashboardLayout from './components/DashboardLayout'
+import AdminLayout from './components/AdminLayout'
 
 export default function App() {
   return (
@@ -28,7 +30,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      <Route element={<ProtectedRoute />}>
+      <Route element={<ProtectedRoute requiredRole="PHOTOGRAPHER" />}>
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<PhotographerDashboard />} />
           <Route path="/dashboard/portfolio" element={<PortfolioManager />} />
@@ -38,9 +40,14 @@ export default function App() {
         </Route>
       </Route>
 
-      <Route path="/admin" element={<AdminPanel />} />
-      <Route path="/admin/reviews" element={<ReviewModeration />} />
-      <Route path="/admin/photos" element={<PhotoModeration />} />
+      <Route element={<ProtectedRoute requiredRole="ADMIN" />}>
+        <Route element={<AdminLayout />}>
+          <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/admin/reviews" element={<ReviewModeration />} />
+          <Route path="/admin/photos" element={<PhotoModeration />} />
+          <Route path="/admin/users" element={<UserManagement />} />
+        </Route>
+      </Route>
 
       <Route path="*" element={<NotFound />} />
     </Routes>

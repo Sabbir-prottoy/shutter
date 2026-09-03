@@ -5,7 +5,7 @@ const navLinkClass = ({ isActive }) =>
   `text-sm font-medium transition-colors hover:text-accent ${isActive ? 'text-accent' : 'text-ink-muted'}`
 
 export default function Navbar() {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user } = useAuth()
 
   return (
     <header className="border-b border-border">
@@ -23,10 +23,10 @@ export default function Navbar() {
 
           {isAuthenticated ? (
             <Link
-              to="/dashboard"
+              to={user?.role === 'ADMIN' ? '/admin' : '/dashboard'}
               className="rounded-card bg-accent-gradient px-3 py-2 text-sm font-medium text-white shadow-card transition-shadow hover:shadow-hover sm:px-4"
             >
-              Dashboard
+              {user?.role === 'ADMIN' ? 'Admin panel' : 'Dashboard'}
             </Link>
           ) : (
             <>
