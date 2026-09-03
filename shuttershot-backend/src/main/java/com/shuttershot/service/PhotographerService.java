@@ -52,6 +52,13 @@ public class PhotographerService {
         return toProfileResponse(findById(id));
     }
 
+    @Transactional(readOnly = true)
+    public PhotographerProfileResponse getOwnProfile(Long authenticatedUserId) {
+        PhotographerProfile profile = photographerProfileRepository.findByUserId(authenticatedUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Photographer profile not found for current user"));
+        return toProfileResponse(profile);
+    }
+
     @Transactional
     public PhotographerProfileResponse update(Long id, UpdatePhotographerProfileRequest request, Long authenticatedUserId) {
         PhotographerProfile profile = findById(id);

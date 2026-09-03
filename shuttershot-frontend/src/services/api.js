@@ -28,6 +28,11 @@ export function registerRequest(payload) {
   return api.post('/auth/register', payload).then((res) => res.data)
 }
 
+// Photographer (dashboard, own profile)
+export function getMyProfile() {
+  return api.get('/photographers/me').then((res) => res.data)
+}
+
 // Photographer (public)
 export function searchPhotographers({ location, category } = {}) {
   return api
@@ -49,6 +54,10 @@ export function getPhotographerPackages(id) {
 
 export function getPhotographerAvailability(id, { from, to } = {}) {
   return api.get(`/photographers/${id}/availability`, { params: { from, to } }).then((res) => res.data)
+}
+
+export function setAvailability(date, status) {
+  return api.put(`/availability/${date}`, { status }).then((res) => res.data)
 }
 
 // Reviews (public)
