@@ -56,8 +56,10 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/otp/**", "/uploads/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/photographers/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/bookings", "/api/bookings/*/confirm-otp").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/photographers/**", "/api/reviews").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/bookings", "/api/bookings/*/confirm-otp", "/api/reviews")
+                        .permitAll()
+                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
