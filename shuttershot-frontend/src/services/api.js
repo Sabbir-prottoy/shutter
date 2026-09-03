@@ -75,6 +75,23 @@ export function deletePortfolioImage(id) {
   return api.delete(`/portfolio/${id}`).then((res) => res.data)
 }
 
+// Packages (photographer dashboard, own packages)
+export function getMyPackages() {
+  return api.get('/packages').then((res) => res.data)
+}
+
+export function createPackage(payload) {
+  return api.post('/packages', payload).then((res) => res.data)
+}
+
+export function updatePackage(id, payload) {
+  return api.put(`/packages/${id}`, payload).then((res) => res.data)
+}
+
+export function deletePackage(id) {
+  return api.delete(`/packages/${id}`).then((res) => res.data)
+}
+
 // Booking (public, guest flow)
 export function createBooking(payload) {
   return api.post('/bookings', payload).then((res) => res.data)

@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom'
 
-export default function PackageCard({ pkg }) {
+export default function PackageCard({ pkg, onEdit, onDelete }) {
   const { photographerId, title, description, price, durationHours, deliveryDays } = pkg
+  const isManaged = Boolean(onEdit || onDelete)
 
   return (
     <div className="flex flex-col rounded-card bg-surface p-6 shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-hover">
@@ -24,12 +25,35 @@ export default function PackageCard({ pkg }) {
 
       {description && <p className="mt-4 flex-1 text-sm text-ink-muted">{description}</p>}
 
-      <Link
-        to={`/book/${photographerId}?package=${pkg.id}`}
-        className="mt-6 rounded-card bg-accent-gradient px-4 py-2.5 text-center text-sm font-medium text-white shadow-card transition-shadow hover:shadow-hover"
-      >
-        Book session
-      </Link>
+      {isManaged ? (
+        <div className="mt-6 flex gap-4 text-sm">
+          {onEdit && (
+            <button
+              type="button"
+              onClick={() => onEdit(pkg)}
+              className="text-ink-muted underline transition-colors hover:text-accent"
+            >
+              Edit
+            </button>
+          )}
+          {onDelete && (
+            <button
+              type="button"
+              onClick={() => onDelete(pkg)}
+              className="text-ink-muted underline transition-colors hover:text-accent"
+            >
+              Delete
+            </button>
+          )}
+        </div>
+      ) : (
+        <Link
+          to={`/book/${photographerId}?package=${pkg.id}`}
+          className="mt-6 rounded-card bg-accent-gradient px-4 py-2.5 text-center text-sm font-medium text-white shadow-card transition-shadow hover:shadow-hover"
+        >
+          Book session
+        </Link>
+      )}
     </div>
   )
 }
