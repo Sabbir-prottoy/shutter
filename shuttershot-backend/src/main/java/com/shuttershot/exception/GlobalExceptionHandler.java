@@ -44,6 +44,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ExceptionHandler(InvalidRequestException.class)
+    public ResponseEntity<ApiError> handleInvalidRequest(InvalidRequestException ex) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ApiError> handleMaxUploadSize(MaxUploadSizeExceededException ex) {
         return build(HttpStatus.BAD_REQUEST, "Uploaded file exceeds the maximum allowed size");
