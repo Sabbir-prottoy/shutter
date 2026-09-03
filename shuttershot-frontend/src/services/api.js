@@ -35,4 +35,9 @@ export function getPhotographerAvailability(id, { from, to } = {}) {
   return api.get(`/photographers/${id}/availability`, { params: { from, to } }).then((res) => res.data)
 }
 
+// Reviews (public)
+export function getPhotographerReviews(id) {
+  return api.get('/reviews', { params: { photographerId: id } }).then((res) => res.data)
+}
+
 export default api
