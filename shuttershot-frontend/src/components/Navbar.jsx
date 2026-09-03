@@ -6,23 +6,25 @@ const navLinkClass = ({ isActive }) =>
 export default function Navbar() {
   return (
     <header className="border-b border-border">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-4 sm:px-6 sm:py-5">
         <Link to="/" className="font-display text-xl font-bold text-ink">
           ShutterShot
         </Link>
 
-        <nav className="flex items-center gap-8">
-          <NavLink to="/search" className={navLinkClass}>
-            Find a photographer
-          </NavLink>
+        <nav className="flex items-center gap-3 sm:gap-8">
+          <span className="hidden sm:inline">
+            <NavLink to="/search" className={navLinkClass}>
+              Find a photographer
+            </NavLink>
+          </span>
           <NavLink to="/login" className={navLinkClass}>
             Log in
           </NavLink>
           <Link
             to="/register"
-            className="rounded-card bg-accent-gradient px-4 py-2 text-sm font-medium text-white shadow-card transition-shadow hover:shadow-hover"
+            className="rounded-card bg-accent-gradient px-3 py-2 text-sm font-medium text-white shadow-card transition-shadow hover:shadow-hover sm:px-4"
           >
-            Join as photographer
+            Join<span className="hidden sm:inline"> as photographer</span>
           </Link>
         </nav>
       </div>
