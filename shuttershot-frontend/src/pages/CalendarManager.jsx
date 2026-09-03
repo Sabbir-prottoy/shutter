@@ -1,8 +1,8 @@
-import PlaceholderPage from '../components/PlaceholderPage'
+import DashboardPlaceholder from '../components/DashboardPlaceholder'
 
 export default function CalendarManager() {
   return (
-    <PlaceholderPage
+    <DashboardPlaceholder
       title="Calendar manager"
       description="Block or unblock dates and view bookings here soon."
     />
