@@ -1,6 +1,7 @@
 package com.shuttershot.service;
 
 import com.shuttershot.dto.PortfolioImageResponse;
+import com.shuttershot.exception.InvalidRequestException;
 import com.shuttershot.exception.ResourceNotFoundException;
 import com.shuttershot.model.ImageCategory;
 import com.shuttershot.model.PhotographerProfile;
@@ -54,9 +55,7 @@ public class PortfolioService {
 
     @Transactional
     public void delete(Long imageId, Long authenticatedUserId) {
-        PortfolioImage image = portfolioImageRepository.findById(imageId)
-                .orElseThrow(() -> new ResourceNotFoundException("Portfolio image not found with id: " + imageId));
-
+        PortfolioImage image = findById(imageId);
         PhotographerProfile owner = findOwnProfile(authenticatedUserId);
 
         if (!image.getPhotographer().getId().equals(owner.getId())) {
@@ -65,6 +64,41 @@ public class PortfolioService {
 
         fileStorageService.delete(image.getImageUrl());
         portfolioImageRepository.delete(image);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PortfolioImageResponse> listFlagged() {
+        return portfolioImageRepository.findByVerificationStatus(VerificationStatus.FLAGGED).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional
+    public PortfolioImageResponse verifyByAdmin(Long imageId) {
+        PortfolioImage image = findById(imageId);
+        if (image.getVerificationStatus() != VerificationStatus.FLAGGED) {
+            throw new InvalidRequestException("Only flagged photos can be moderated");
+        }
+
+        image.setVerificationStatus(VerificationStatus.VERIFIED);
+        image.setFlagReason(null);
+        return toResponse(image);
+    }
+
+    @Transactional
+    public void rejectByAdmin(Long imageId) {
+        PortfolioImage image = findById(imageId);
+        if (image.getVerificationStatus() != VerificationStatus.FLAGGED) {
+            throw new InvalidRequestException("Only flagged photos can be moderated");
+        }
+
+        fileStorageService.delete(image.getImageUrl());
+        portfolioImageRepository.delete(image);
+    }
+
+    private PortfolioImage findById(Long id) {
+        return portfolioImageRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Portfolio image not found with id: " + id));
     }
 
     private PhotographerProfile findOwnProfile(Long authenticatedUserId) {

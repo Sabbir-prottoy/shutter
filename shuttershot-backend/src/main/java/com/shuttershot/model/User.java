@@ -13,6 +13,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -56,6 +57,11 @@ public class User {
     @Column(nullable = false)
     @Builder.Default
     private boolean verified = false;
+
+    @Column(nullable = false)
+    @ColumnDefault("true")
+    @Builder.Default
+    private boolean enabled = true;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
