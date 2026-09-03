@@ -34,6 +34,14 @@ public class PortfolioService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<PortfolioImageResponse> listOwn(Long authenticatedUserId) {
+        PhotographerProfile photographer = findOwnProfile(authenticatedUserId);
+        return portfolioImageRepository.findByPhotographerId(photographer.getId()).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     @Transactional
     public PortfolioImageResponse upload(MultipartFile file, ImageCategory category, Long authenticatedUserId) {
         PhotographerProfile photographer = findOwnProfile(authenticatedUserId);
