@@ -20,7 +20,13 @@ function endOfMonth(date) {
   return new Date(date.getFullYear(), date.getMonth() + 1, 0)
 }
 
-export default function AvailabilityCalendar({ photographerId, selectedDate, onSelectDate }) {
+export default function AvailabilityCalendar({
+  photographerId,
+  selectedDate,
+  onSelectDate,
+  interactiveStatuses = ['FREE'],
+  refreshKey,
+}) {
   const [viewedMonth, setViewedMonth] = useState(() => startOfMonth(new Date()))
   const [statusByDate, setStatusByDate] = useState({})
   const [status, setStatus] = useState('loading')
@@ -49,7 +55,7 @@ export default function AvailabilityCalendar({ photographerId, selectedDate, onS
     return () => {
       cancelled = true
     }
-  }, [photographerId, viewedMonth])
+  }, [photographerId, viewedMonth, refreshKey])
 
   const monthStart = startOfMonth(viewedMonth)
   const monthEnd = endOfMonth(viewedMonth)
@@ -99,8 +105,9 @@ export default function AvailabilityCalendar({ photographerId, selectedDate, onS
           const iso = toISODate(date)
           const isPast = iso < today
           const explicitStatus = statusByDate[iso]
-          const isFree = !explicitStatus || explicitStatus === 'FREE'
-          const isSelectable = Boolean(onSelectDate) && isFree && !isPast
+          const currentStatus = explicitStatus || 'FREE'
+          const isFree = currentStatus === 'FREE'
+          const isSelectable = Boolean(onSelectDate) && !isPast && interactiveStatuses.includes(currentStatus)
           const isSelected = selectedDate === iso
 
           const baseClass =
@@ -117,7 +124,7 @@ export default function AvailabilityCalendar({ photographerId, selectedDate, onS
               <button
                 key={iso}
                 type="button"
-                onClick={() => onSelectDate(iso)}
+                onClick={() => onSelectDate(iso, currentStatus)}
                 className={`${baseClass} ${stateClass} ${selectedClass} cursor-pointer`}
               >
                 {date.getDate()}
