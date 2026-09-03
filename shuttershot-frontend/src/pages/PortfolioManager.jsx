@@ -1,8 +1,8 @@
-import PlaceholderPage from '../components/PlaceholderPage'
+import DashboardPlaceholder from '../components/DashboardPlaceholder'
 
 export default function PortfolioManager() {
   return (
-    <PlaceholderPage
+    <DashboardPlaceholder
       title="Portfolio manager"
       description="Upload and manage your portfolio images here soon."
     />

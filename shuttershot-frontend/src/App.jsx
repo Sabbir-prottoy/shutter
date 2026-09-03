@@ -14,6 +14,8 @@ import PhotoModeration from './pages/AdminPanel/PhotoModeration'
 import Login from './pages/Login'
 import Register from './pages/Register'
 import NotFound from './pages/NotFound'
+import ProtectedRoute from './components/ProtectedRoute'
+import DashboardLayout from './components/DashboardLayout'
 
 export default function App() {
   return (
@@ -26,11 +28,15 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
 
-      <Route path="/dashboard" element={<PhotographerDashboard />} />
-      <Route path="/dashboard/portfolio" element={<PortfolioManager />} />
-      <Route path="/dashboard/calendar" element={<CalendarManager />} />
-      <Route path="/dashboard/packages" element={<PackageManager />} />
-      <Route path="/dashboard/bookings" element={<BookingRequests />} />
+      <Route element={<ProtectedRoute />}>
+        <Route element={<DashboardLayout />}>
+          <Route path="/dashboard" element={<PhotographerDashboard />} />
+          <Route path="/dashboard/portfolio" element={<PortfolioManager />} />
+          <Route path="/dashboard/calendar" element={<CalendarManager />} />
+          <Route path="/dashboard/packages" element={<PackageManager />} />
+          <Route path="/dashboard/bookings" element={<BookingRequests />} />
+        </Route>
+      </Route>
 
       <Route path="/admin" element={<AdminPanel />} />
       <Route path="/admin/reviews" element={<ReviewModeration />} />

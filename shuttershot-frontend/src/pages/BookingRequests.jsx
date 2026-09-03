@@ -1,8 +1,8 @@
-import PlaceholderPage from '../components/PlaceholderPage'
+import DashboardPlaceholder from '../components/DashboardPlaceholder'
 
 export default function BookingRequests() {
   return (
-    <PlaceholderPage
+    <DashboardPlaceholder
       title="Booking requests"
       description="Accept, reject, and complete bookings here soon."
     />

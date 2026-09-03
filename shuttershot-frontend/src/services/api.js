@@ -1,16 +1,32 @@
 import axios from 'axios'
 
+export const AUTH_STORAGE_KEY = 'shuttershot_auth'
+
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080/api',
 })
 
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('shuttershot_token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
+  try {
+    const raw = localStorage.getItem(AUTH_STORAGE_KEY)
+    const token = raw ? JSON.parse(raw).token : null
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+  } catch {
+    // malformed/corrupt storage — proceed unauthenticated rather than throw
   }
   return config
 })
+
+// Auth
+export function loginRequest(payload) {
+  return api.post('/auth/login', payload).then((res) => res.data)
+}
+
+export function registerRequest(payload) {
+  return api.post('/auth/register', payload).then((res) => res.data)
+}
 
 // Photographer (public)
 export function searchPhotographers({ location, category } = {}) {

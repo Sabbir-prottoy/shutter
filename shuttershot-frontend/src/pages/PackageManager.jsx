@@ -1,8 +1,8 @@
-import PlaceholderPage from '../components/PlaceholderPage'
+import DashboardPlaceholder from '../components/DashboardPlaceholder'
 
 export default function PackageManager() {
   return (
-    <PlaceholderPage
+    <DashboardPlaceholder
       title="Package manager"
       description="Create and edit your service packages here soon."
     />
