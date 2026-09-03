@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+/*
+  Design tokens from shuttershot-design-system-light.md, section 1/2/6.
+  Tailwind v4 auto-generates utilities from --color-*, --font-*, --shadow-*,
+  and --radius-* theme keys. A couple of the doc's token names (text-primary,
+  text-muted) are mapped to shorter keys here (ink, ink-muted) to avoid the
+  "text-text-primary" stutter Tailwind would otherwise produce — the values
+  are unchanged from the doc.
+*/
+@theme {
+  --color-surface: #ffffff;
+  --color-surface-raised: #fcfaf7;
+  --color-ink: #1e1b16;
+  --color-ink-muted: #7a7267;
+  --color-accent: #c15a3a;
+  --color-accent-light: #d9825e;
+  --color-free: #8db5a0;
+  --color-booked: #c47a6e;
+  --color-border: #e8e2d9;
+
+  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: "Work Sans", system-ui, sans-serif;
+
+  --radius-card: 0.5rem;
+
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.04);
+  --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.08);
+}
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-ink);
+  background: linear-gradient(145deg, #fbf7f0 0%, #f5eee6 100%);
+  min-height: 100vh;
+}
+
+/* Canvas gradient + accent gradient aren't expressible as single Tailwind
+   color tokens, so they're plain utility classes instead. */
+.bg-canvas {
+  background: linear-gradient(145deg, #fbf7f0 0%, #f5eee6 100%);
+}
+
+.bg-accent-gradient {
+  background: linear-gradient(135deg, #c15a3a, #d9825e);
+}
+
+/* Visible keyboard focus states in the accent color, per section 6. */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
