@@ -57,6 +57,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/otp/**", "/uploads/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/photographers/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/bookings", "/api/bookings/*/confirm-otp").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
