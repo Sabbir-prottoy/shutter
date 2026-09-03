@@ -5,7 +5,13 @@ import Footer from '../components/Footer'
 import PortfolioGrid from '../components/PortfolioGrid'
 import PackageCard from '../components/PackageCard'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
-import { getPhotographer, getPhotographerPackages, getPhotographerPortfolio } from '../services/api'
+import ReviewCard from '../components/ReviewCard'
+import {
+  getPhotographer,
+  getPhotographerPackages,
+  getPhotographerPortfolio,
+  getPhotographerReviews,
+} from '../services/api'
 
 export default function PhotographerProfile() {
   const { id } = useParams()
@@ -13,18 +19,25 @@ export default function PhotographerProfile() {
   const [profile, setProfile] = useState(null)
   const [portfolio, setPortfolio] = useState([])
   const [packages, setPackages] = useState([])
+  const [reviews, setReviews] = useState([])
   const [status, setStatus] = useState('loading')
 
   useEffect(() => {
     let cancelled = false
     setStatus('loading')
 
-    Promise.all([getPhotographer(id), getPhotographerPortfolio(id), getPhotographerPackages(id)])
-      .then(([profileData, portfolioData, packagesData]) => {
+    Promise.all([
+      getPhotographer(id),
+      getPhotographerPortfolio(id),
+      getPhotographerPackages(id),
+      getPhotographerReviews(id),
+    ])
+      .then(([profileData, portfolioData, packagesData, reviewsData]) => {
         if (cancelled) return
         setProfile(profileData)
         setPortfolio(portfolioData)
         setPackages(packagesData)
+        setReviews(reviewsData)
         setStatus('ready')
       })
       .catch((error) => {
@@ -166,6 +179,19 @@ export default function PhotographerProfile() {
         <div className="mt-6 max-w-md">
           <AvailabilityCalendar photographerId={id} />
         </div>
+      </section>
+
+      <section className="mx-auto w-full max-w-6xl px-6 py-12 sm:px-12">
+        <h2 className="font-display text-3xl font-bold text-ink">Reviews</h2>
+        {reviews.length === 0 ? (
+          <p className="mt-6 text-ink-muted">No reviews yet.</p>
+        ) : (
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {reviews.map((review) => (
+              <ReviewCard key={review.id} review={review} />
+            ))}
+          </div>
+        )}
       </section>
 
       <Footer />
