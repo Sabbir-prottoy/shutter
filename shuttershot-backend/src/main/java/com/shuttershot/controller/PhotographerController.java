@@ -1,9 +1,11 @@
 package com.shuttershot.controller;
 
+import com.shuttershot.dto.PackageResponse;
 import com.shuttershot.dto.PhotographerProfileResponse;
 import com.shuttershot.dto.PhotographerSummaryResponse;
 import com.shuttershot.dto.PortfolioImageResponse;
 import com.shuttershot.dto.UpdatePhotographerProfileRequest;
+import com.shuttershot.service.PackageService;
 import com.shuttershot.service.PhotographerService;
 import com.shuttershot.service.PortfolioService;
 import com.shuttershot.service.UserPrincipal;
@@ -28,6 +30,7 @@ public class PhotographerController {
 
     private final PhotographerService photographerService;
     private final PortfolioService portfolioService;
+    private final PackageService packageService;
 
     @GetMapping
     public ResponseEntity<List<PhotographerSummaryResponse>> search(
@@ -44,6 +47,11 @@ public class PhotographerController {
     @GetMapping("/{id}/portfolio")
     public ResponseEntity<List<PortfolioImageResponse>> getPortfolio(@PathVariable Long id) {
         return ResponseEntity.ok(portfolioService.listByPhotographer(id));
+    }
+
+    @GetMapping("/{id}/packages")
+    public ResponseEntity<List<PackageResponse>> getPackages(@PathVariable Long id) {
+        return ResponseEntity.ok(packageService.listByPhotographer(id));
     }
 
     @PutMapping("/{id}")
