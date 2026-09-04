@@ -29,6 +29,14 @@ public class PackageService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<PackageResponse> listOwn(Long authenticatedUserId) {
+        PhotographerProfile photographer = findOwnProfile(authenticatedUserId);
+        return packageRepository.findByPhotographerId(photographer.getId()).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
     @Transactional
     public PackageResponse create(CreatePackageRequest request, Long authenticatedUserId) {
         PhotographerProfile photographer = findOwnProfile(authenticatedUserId);

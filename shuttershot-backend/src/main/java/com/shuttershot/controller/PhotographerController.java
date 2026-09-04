@@ -44,6 +44,11 @@ public class PhotographerController {
         return ResponseEntity.ok(photographerService.search(location, category));
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<PhotographerProfileResponse> getOwnProfile(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(photographerService.getOwnProfile(principal.getId()));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<PhotographerProfileResponse> getById(@PathVariable Long id) {
         return ResponseEntity.ok(photographerService.getById(id));

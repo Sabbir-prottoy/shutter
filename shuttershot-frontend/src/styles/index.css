@@ -35,6 +35,10 @@
 body {
   font-family: var(--font-sans);
   color: var(--color-ink);
+  /* Safety net: a component that doesn't shrink at narrow widths should
+     wrap or get clipped locally, never push the whole page into horizontal
+     scroll (mobile-first per the design system, section 6). */
+  overflow-x: hidden;
   background: linear-gradient(145deg, #fbf7f0 0%, #f5eee6 100%);
   min-height: 100vh;
 }

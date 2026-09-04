@@ -1,9 +1,12 @@
-import PlaceholderPage from '../components/PlaceholderPage'
+import { useAuth } from '../context/AuthContext'
+import DashboardPlaceholder from '../components/DashboardPlaceholder'
 
 export default function PhotographerDashboard() {
+  const { user } = useAuth()
+
   return (
-    <PlaceholderPage
-      title="Dashboard"
+    <DashboardPlaceholder
+      title={`Welcome back${user?.name ? `, ${user.name}` : ''}`}
       description="Your bookings overview and stats are coming soon."
     />
   )
