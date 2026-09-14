@@ -12,8 +12,12 @@ import AdminPanel from './pages/AdminPanel/AdminPanel'
 import ReviewModeration from './pages/AdminPanel/ReviewModeration'
 import PhotoModeration from './pages/AdminPanel/PhotoModeration'
 import UserManagement from './pages/AdminPanel/UserManagement'
+import FAQ from './pages/FAQ'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import AdminLogin from './pages/AdminLogin'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 import DashboardLayout from './components/DashboardLayout'
@@ -26,9 +30,13 @@ export default function App() {
       <Route path="/search" element={<SearchResults />} />
       <Route path="/photographers/:id" element={<PhotographerProfile />} />
       <Route path="/book/:photographerId" element={<BookingFlow />} />
+      <Route path="/faq" element={<FAQ />} />
 
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
 
       <Route element={<ProtectedRoute requiredRole="PHOTOGRAPHER" />}>
         <Route element={<DashboardLayout />}>
