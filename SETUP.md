@@ -35,6 +35,18 @@ runs with zero configuration:
 | `JWT_EXPIRATION_MS` | `86400000` (24h) |
 | `UPLOAD_DIR` | `uploads/portfolio` |
 | `APP_BASE_URL` | `http://localhost:8080` |
+| `APP_FRONTEND_URL` | `http://localhost:5173` — used to build the link inside password-reset emails |
+| `MAIL_HOST` | `smtp.gmail.com` |
+| `MAIL_PORT` | `587` |
+| `MAIL_USERNAME` | *(empty)* — an SMTP account to send from, e.g. a Gmail address |
+| `MAIL_PASSWORD` | *(empty)* — for Gmail, a 16-character [App Password](https://myaccount.google.com/apppasswords), not your normal password |
+| `MAIL_FROM` | `no-reply@shuttershot.local` |
+
+**Forgot-password emails:** if `MAIL_USERNAME`/`MAIL_PASSWORD` aren't set (the
+default for a fresh clone), sending fails silently and the backend logs the
+reset link instead — `grep "reset link" backend.log` (or watch the console)
+to get it during local testing. Set real SMTP credentials to get actual
+emails.
 
 Spring Boot doesn't load `.env` files itself, so if you need to override any
 of these, export them in your shell before running the app, e.g.:

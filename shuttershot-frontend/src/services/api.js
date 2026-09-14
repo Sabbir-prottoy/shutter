@@ -28,6 +28,14 @@ export function registerRequest(payload) {
   return api.post('/auth/register', payload).then((res) => res.data)
 }
 
+export function forgotPasswordRequest(payload) {
+  return api.post('/auth/forgot-password', payload).then((res) => res.data)
+}
+
+export function resetPasswordRequest(payload) {
+  return api.post('/auth/reset-password', payload).then((res) => res.data)
+}
+
 // Photographer (dashboard, own profile)
 export function getMyProfile() {
   return api.get('/photographers/me').then((res) => res.data)

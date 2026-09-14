@@ -7,6 +7,9 @@ out/
 *.jar
 !**/.mvn/wrapper/maven-wrapper.jar
 
+# Local dev tooling (e.g. a portable JDK) — machine-specific, not project source
+.tools/
+
 # Environment / secrets
 .env
 .env.*

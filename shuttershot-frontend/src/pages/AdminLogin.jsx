@@ -5,7 +5,7 @@ import Footer from '../components/Footer'
 import { useAuth } from '../context/AuthContext'
 import { loginRequest } from '../services/api'
 
-export default function Login() {
+export default function AdminLogin() {
   const { login } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -22,9 +22,12 @@ export default function Login() {
 
     try {
       const result = await loginRequest({ email, password })
+      if (result.role !== 'ADMIN') {
+        setError('This portal is for admin accounts only.')
+        return
+      }
       login(result)
-      const defaultPath = result.role === 'ADMIN' ? '/admin' : '/dashboard'
-      navigate(location.state?.from?.pathname || defaultPath, { replace: true })
+      navigate(location.state?.from?.pathname || '/admin', { replace: true })
     } catch (err) {
       setError(err?.response?.data?.message || 'Invalid email or password.')
     } finally {
@@ -37,8 +40,8 @@ export default function Login() {
       <Navbar />
 
       <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-6 py-16">
-        <h1 className="font-display text-3xl font-bold text-ink">Log in</h1>
-        <p className="mt-2 text-ink-muted">Welcome back — manage your bookings and portfolio.</p>
+        <h1 className="font-display text-3xl font-bold text-ink">Admin portal</h1>
+        <p className="mt-2 text-ink-muted">Sign in with your admin credentials to manage the platform.</p>
 
         <form onSubmit={handleSubmit} className="mt-8 space-y-4">
           <input
@@ -46,7 +49,7 @@ export default function Login() {
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
-            placeholder="Email address"
+            placeholder="Admin email address"
             className="w-full rounded-card border border-border bg-surface px-4 py-3 text-ink placeholder:text-ink-muted focus:border-accent"
           />
           <input
@@ -59,7 +62,7 @@ export default function Login() {
           />
 
           <p className="text-right text-sm">
-            <Link to="/forgot-password" className="text-accent underline">
+            <Link to="/forgot-password?portal=admin" className="text-accent underline">
               Forgot password?
             </Link>
           </p>
@@ -76,9 +79,9 @@ export default function Login() {
         </form>
 
         <p className="mt-6 text-sm text-ink-muted">
-          New to ShutterShot?{' '}
-          <Link to="/register" className="text-accent underline">
-            Join as a photographer
+          Not an admin?{' '}
+          <Link to="/login" className="text-accent underline">
+            Log in as a photographer
           </Link>
         </p>
       </main>
