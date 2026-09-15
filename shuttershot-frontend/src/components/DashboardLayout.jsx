@@ -1,5 +1,17 @@
+import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { getMyPortfolio, getMyProfile } from '../services/api'
+import Footer from './Footer'
+
+// How often the sidebar's pending-approval count refreshes on its own —
+// frequent enough to notice an admin decision without a manual reload,
+// without hammering the API.
+const PENDING_POLL_MS = 20000
+
+function categoryLabel(category) {
+  return category.charAt(0) + category.slice(1).toLowerCase()
+}
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Overview', end: true },
@@ -7,6 +19,7 @@ const NAV_ITEMS = [
   { to: '/dashboard/calendar', label: 'Calendar' },
   { to: '/dashboard/packages', label: 'Packages' },
   { to: '/dashboard/bookings', label: 'Bookings' },
+  { to: '/dashboard/profile', label: 'Profile Settings' },
 ]
 
 const desktopLinkClass = ({ isActive }) =>
@@ -19,6 +32,8 @@ const mobileLinkClass = ({ isActive }) =>
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth()
+  const [pendingImages, setPendingImages] = useState([])
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState(null)
 
   // No explicit navigate() here: clearing auth state makes ProtectedRoute's
   // own redirect take over immediately, landing on /login — a race against
@@ -28,13 +43,58 @@ export default function DashboardLayout() {
     logout()
   }
 
+  useEffect(() => {
+    let cancelled = false
+
+    function loadSidebarData() {
+      getMyPortfolio()
+        .then((data) => {
+          if (!cancelled) {
+            setPendingImages(data.filter((image) => image.verificationStatus === 'PENDING'))
+          }
+        })
+        .catch(() => {
+          // Sidebar widget is a convenience, not core navigation — fail quietly.
+        })
+
+      // Also picks up a photo uploaded from the Profile Settings page —
+      // that page doesn't share state with this persistent layout, so
+      // polling is what keeps the sidebar avatar in sync with it.
+      getMyProfile()
+        .then((data) => {
+          if (!cancelled) {
+            setProfilePhotoUrl(data.profilePhotoUrl || null)
+          }
+        })
+        .catch(() => {})
+    }
+
+    loadSidebarData()
+    const interval = setInterval(loadSidebarData, PENDING_POLL_MS)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [])
+
   return (
     <div className="flex min-h-screen bg-canvas">
       <aside className="hidden w-64 shrink-0 border-r border-border p-6 sm:block">
         <Link to="/" className="font-display text-xl font-bold text-ink">
           ShutterShot
         </Link>
-        {user?.name && <p className="mt-1 truncate text-sm text-ink-muted">{user.name}</p>}
+
+        <Link
+          to="/dashboard/profile"
+          className="mt-4 flex items-center gap-3 rounded-card p-1 transition-colors hover:bg-surface-raised"
+        >
+          <span className="h-11 w-11 shrink-0 overflow-hidden rounded-full border border-border bg-surface-raised">
+            {profilePhotoUrl && (
+              <img src={profilePhotoUrl} alt="Profile" className="h-full w-full object-cover" />
+            )}
+          </span>
+          {user?.name && <span className="truncate text-sm text-ink-muted">{user.name}</span>}
+        </Link>
 
         <nav className="mt-8 flex flex-col gap-1">
           {NAV_ITEMS.map((item) => (
@@ -43,6 +103,37 @@ export default function DashboardLayout() {
             </NavLink>
           ))}
         </nav>
+
+        <div className="mt-8 rounded-card border border-border bg-surface p-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-ink">Pending approval</h2>
+            <span className="shrink-0 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">
+              {pendingImages.length}
+            </span>
+          </div>
+
+          {pendingImages.length === 0 ? (
+            <p className="mt-2 text-xs text-ink-muted">Nothing waiting right now.</p>
+          ) : (
+            <ul className="mt-3 space-y-3">
+              {pendingImages.map((image) => (
+                <li key={image.id} className="flex items-center gap-2">
+                  <img
+                    src={image.imageUrl}
+                    alt={image.category}
+                    className="h-10 w-10 shrink-0 rounded object-cover"
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate text-xs font-medium text-ink">
+                      {categoryLabel(image.category)}
+                    </p>
+                    <p className="text-[11px] text-ink-muted">Waiting for admin review</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
 
         <button
           type="button"
@@ -53,7 +144,7 @@ export default function DashboardLayout() {
         </button>
       </aside>
 
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col">
         <div className="border-b border-border p-4 sm:hidden">
           <div className="flex items-center justify-between">
             <Link to="/" className="font-display text-lg font-bold text-ink">
@@ -76,9 +167,11 @@ export default function DashboardLayout() {
           </nav>
         </div>
 
-        <main className="p-6 sm:p-10">
+        <main className="flex-1 p-6 sm:p-10">
           <Outlet />
         </main>
+
+        <Footer />
       </div>
     </div>
   )

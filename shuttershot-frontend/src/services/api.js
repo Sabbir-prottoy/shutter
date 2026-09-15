@@ -41,6 +41,16 @@ export function getMyProfile() {
   return api.get('/photographers/me').then((res) => res.data)
 }
 
+export function updateMyProfile(photographerProfileId, payload) {
+  return api.put(`/photographers/${photographerProfileId}`, payload).then((res) => res.data)
+}
+
+export function uploadProfilePhoto(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return api.post('/photographers/me/photo', formData).then((res) => res.data)
+}
+
 // Photographer (public)
 export function searchPhotographers({ location, category } = {}) {
   return api
@@ -78,14 +88,21 @@ export function getMyPortfolio() {
   return api.get('/portfolio').then((res) => res.data)
 }
 
-export function uploadPortfolioImage(file, category) {
+export function uploadPortfolioImage(file, category, caption) {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('category', category)
+  if (caption) {
+    formData.append('caption', caption)
+  }
   // No explicit Content-Type here — axios/the browser sets the multipart
   // boundary automatically for FormData; overriding it manually drops the
   // boundary parameter and breaks the upload.
   return api.post('/portfolio', formData).then((res) => res.data)
+}
+
+export function updatePortfolioCaption(id, caption) {
+  return api.put(`/portfolio/${id}`, { caption }).then((res) => res.data)
 }
 
 export function deletePortfolioImage(id) {
@@ -144,12 +161,12 @@ export function rejectReview(id) {
   return api.put(`/admin/reviews/${id}/reject`).then((res) => res.data)
 }
 
-export function getFlaggedPhotos() {
-  return api.get('/admin/photos/flagged').then((res) => res.data)
+export function getPendingPhotos() {
+  return api.get('/admin/photos/pending').then((res) => res.data)
 }
 
-export function verifyPhoto(id) {
-  return api.put(`/admin/photos/${id}/verify`).then((res) => res.data)
+export function approvePhoto(id) {
+  return api.put(`/admin/photos/${id}/approve`).then((res) => res.data)
 }
 
 export function rejectPhoto(id) {
@@ -170,6 +187,11 @@ export function banUser(id) {
 
 export function unbanUser(id) {
   return api.put(`/admin/users/${id}/unban`).then((res) => res.data)
+}
+
+// Chatbot (public, site-wide)
+export function askChatbot(message, history) {
+  return api.post('/chatbot/ask', { message, history }).then((res) => res.data)
 }
 
 export default api

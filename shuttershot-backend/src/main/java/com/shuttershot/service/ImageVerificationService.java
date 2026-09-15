@@ -8,7 +8,6 @@ import com.drew.metadata.Tag;
 import com.drew.metadata.exif.ExifIFD0Directory;
 import com.drew.metadata.exif.ExifSubIFDDirectory;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.shuttershot.model.VerificationStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,9 +18,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Minimum-bar image verification: an upload is VERIFIED when it carries genuine
- * camera/device EXIF data, and FLAGGED (for admin review) when that data is absent
- * or unreadable — e.g. screenshots, stock photos, or images stripped of metadata.
+ * Every upload goes to an admin queue regardless of what this finds — this
+ * service only produces a note to help the admin decide, it no longer makes
+ * the go-live decision itself. The signal is EXIF presence: genuine
+ * camera/device metadata suggests an original photo, while missing or
+ * unreadable metadata is a common trait of screenshots, downloaded stock
+ * photos, or AI-generated images, so it's called out for closer review.
  * Reverse-image-search is a stretch goal and not implemented here.
  */
 @Service
@@ -30,7 +32,7 @@ public class ImageVerificationService {
 
     private final ObjectMapper objectMapper;
 
-    public record VerificationResult(VerificationStatus status, String flagReason, String exifDataJson) {
+    public record VerificationResult(String note, String exifDataJson) {
     }
 
     public VerificationResult verify(MultipartFile file) {
@@ -42,8 +44,8 @@ public class ImageVerificationService {
 
             if (ifd0 == null && subIfd == null) {
                 return new VerificationResult(
-                        VerificationStatus.FLAGGED,
-                        "Missing EXIF metadata: no camera/device information found in the image",
+                        "No camera metadata found in this image — it may be a screenshot, a "
+                                + "downloaded photo, or AI-generated. Review carefully before approving.",
                         null
                 );
             }
@@ -55,11 +57,13 @@ public class ImageVerificationService {
                 }
             }
 
-            return new VerificationResult(VerificationStatus.VERIFIED, null, objectMapper.writeValueAsString(exifTags));
+            return new VerificationResult(
+                    "Camera metadata found — this looks like an original photo from a camera or phone.",
+                    objectMapper.writeValueAsString(exifTags)
+            );
         } catch (ImageProcessingException | IOException e) {
             return new VerificationResult(
-                    VerificationStatus.FLAGGED,
-                    "Unable to read image metadata: " + e.getMessage(),
+                    "Could not read this image's metadata (" + e.getMessage() + ") — review carefully before approving.",
                     null
             );
         }

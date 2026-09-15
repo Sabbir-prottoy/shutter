@@ -2,6 +2,7 @@ package com.shuttershot.controller;
 
 import com.shuttershot.dto.OtpVerifyResponse;
 import com.shuttershot.dto.SendOtpRequest;
+import com.shuttershot.dto.SendOtpResponse;
 import com.shuttershot.dto.VerifyOtpRequest;
 import com.shuttershot.exception.InvalidRequestException;
 import com.shuttershot.service.OtpService;
@@ -21,9 +22,9 @@ public class OtpController {
     private final OtpService otpService;
 
     @PostMapping("/send")
-    public ResponseEntity<Void> send(@Valid @RequestBody SendOtpRequest request) {
-        otpService.sendOtp(request.getContact());
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<SendOtpResponse> send(@Valid @RequestBody SendOtpRequest request) {
+        String code = otpService.sendOtp(request.getContact());
+        return ResponseEntity.ok(SendOtpResponse.builder().devOtpCode(code).build());
     }
 
     @PostMapping("/verify")

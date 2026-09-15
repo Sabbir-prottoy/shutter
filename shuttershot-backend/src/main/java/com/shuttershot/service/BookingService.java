@@ -69,9 +69,9 @@ public class BookingService {
         booking = bookingRepository.save(booking);
 
         markDate(photographer, request.getBookingDate(), AvailabilityStatus.BOOKED);
-        otpService.sendOtp(request.getClientPhone());
+        String devOtpCode = otpService.sendOtp(request.getClientPhone());
 
-        return toResponse(booking);
+        return toResponse(booking, devOtpCode);
     }
 
     @Transactional
@@ -151,6 +151,10 @@ public class BookingService {
     }
 
     private BookingResponse toResponse(Booking booking) {
+        return toResponse(booking, null);
+    }
+
+    private BookingResponse toResponse(Booking booking, String devOtpCode) {
         return BookingResponse.builder()
                 .id(booking.getId())
                 .photographerId(booking.getPhotographer().getId())
@@ -163,6 +167,7 @@ public class BookingService {
                 .status(booking.getStatus())
                 .otpVerified(booking.isOtpVerified())
                 .createdAt(booking.getCreatedAt())
+                .devOtpCode(devOtpCode)
                 .build();
     }
 }

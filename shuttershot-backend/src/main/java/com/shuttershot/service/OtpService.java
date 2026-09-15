@@ -20,14 +20,13 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 /**
- * SMS delivery goes through Textbelt (textbelt.com). Its free tier (key
- * "textbelt") sends 1 real text/day per source IP at no cost — enough to
- * demonstrate genuine OTP delivery without a paid gateway. Bangladeshi
- * numbers only route correctly in E.164 form (+880...), so local input
- * formats (01XXXXXXXXX, 880..., bare 1XXXXXXXXX) are normalized before
- * sending. If the send fails (quota exhausted, provider error, contact is
- * an email rather than a phone, etc.) the code is logged instead so the
- * verification flow itself stays testable end-to-end.
+ * SMS delivery goes through Textbelt (textbelt.com), which does attempt a
+ * real send — but every free/near-free gateway evaluated for this project
+ * either can't reach Bangladeshi carriers (Textbelt blocks BD outright) or
+ * has no send capability at all. Rather than block booking entirely on
+ * unresolved SMS delivery, sendOtp() also returns the generated code so the
+ * caller can surface it directly in the UI as a fallback — a deliberate,
+ * temporary trade-off (no real secrecy) to keep the booking flow usable.
  */
 @Service
 @RequiredArgsConstructor
@@ -45,7 +44,7 @@ public class OtpService {
     private String textbeltApiKey;
 
     @Transactional
-    public void sendOtp(String contact) {
+    public String sendOtp(String contact) {
         String code = generateCode();
 
         OtpVerification otp = OtpVerification.builder()
@@ -57,6 +56,7 @@ public class OtpService {
         otpVerificationRepository.save(otp);
 
         sendSms(contact, code);
+        return code;
     }
 
     @Transactional
