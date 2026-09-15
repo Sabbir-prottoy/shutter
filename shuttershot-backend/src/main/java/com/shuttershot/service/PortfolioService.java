@@ -29,7 +29,7 @@ public class PortfolioService {
     @Transactional(readOnly = true)
     public List<PortfolioImageResponse> listByPhotographer(Long photographerId) {
         return portfolioImageRepository.findByPhotographerId(photographerId).stream()
-                .filter(image -> image.getVerificationStatus() != VerificationStatus.FLAGGED)
+                .filter(image -> image.getVerificationStatus() == VerificationStatus.VERIFIED)
                 .map(this::toResponse)
                 .toList();
     }
@@ -43,9 +43,13 @@ public class PortfolioService {
     }
 
     @Transactional
-    public PortfolioImageResponse upload(MultipartFile file, ImageCategory category, Long authenticatedUserId) {
+    public PortfolioImageResponse upload(
+            MultipartFile file, ImageCategory category, String caption, Long authenticatedUserId) {
         PhotographerProfile photographer = findOwnProfile(authenticatedUserId);
 
+        // Every upload waits for admin approval before it can appear on the
+        // public profile — the metadata check below is just a note to help
+        // the admin decide, not an automatic pass/fail.
         ImageVerificationService.VerificationResult result = imageVerificationService.verify(file);
         String imageUrl = fileStorageService.store(file);
 
@@ -53,12 +57,30 @@ public class PortfolioService {
                 .photographer(photographer)
                 .imageUrl(imageUrl)
                 .category(category)
+                .caption(blankToNull(caption))
                 .exifData(result.exifDataJson())
-                .verificationStatus(result.status())
-                .flagReason(result.flagReason())
+                .verificationStatus(VerificationStatus.PENDING)
+                .flagReason(result.note())
                 .build();
 
         return toResponse(portfolioImageRepository.save(image));
+    }
+
+    @Transactional
+    public PortfolioImageResponse updateCaption(Long imageId, String caption, Long authenticatedUserId) {
+        PortfolioImage image = findById(imageId);
+        PhotographerProfile owner = findOwnProfile(authenticatedUserId);
+
+        if (!image.getPhotographer().getId().equals(owner.getId())) {
+            throw new AccessDeniedException("You can only edit your own portfolio images");
+        }
+
+        image.setCaption(blankToNull(caption));
+        return toResponse(image);
+    }
+
+    private String blankToNull(String value) {
+        return (value == null || value.isBlank()) ? null : value.trim();
     }
 
     @Transactional
@@ -75,17 +97,17 @@ public class PortfolioService {
     }
 
     @Transactional(readOnly = true)
-    public List<PortfolioImageResponse> listFlagged() {
-        return portfolioImageRepository.findByVerificationStatus(VerificationStatus.FLAGGED).stream()
+    public List<PortfolioImageResponse> listPending() {
+        return portfolioImageRepository.findByVerificationStatus(VerificationStatus.PENDING).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     @Transactional
-    public PortfolioImageResponse verifyByAdmin(Long imageId) {
+    public PortfolioImageResponse approveByAdmin(Long imageId) {
         PortfolioImage image = findById(imageId);
-        if (image.getVerificationStatus() != VerificationStatus.FLAGGED) {
-            throw new InvalidRequestException("Only flagged photos can be moderated");
+        if (image.getVerificationStatus() != VerificationStatus.PENDING) {
+            throw new InvalidRequestException("Only pending photos can be moderated");
         }
 
         image.setVerificationStatus(VerificationStatus.VERIFIED);
@@ -96,8 +118,8 @@ public class PortfolioService {
     @Transactional
     public void rejectByAdmin(Long imageId) {
         PortfolioImage image = findById(imageId);
-        if (image.getVerificationStatus() != VerificationStatus.FLAGGED) {
-            throw new InvalidRequestException("Only flagged photos can be moderated");
+        if (image.getVerificationStatus() != VerificationStatus.PENDING) {
+            throw new InvalidRequestException("Only pending photos can be moderated");
         }
 
         fileStorageService.delete(image.getImageUrl());
@@ -120,6 +142,7 @@ public class PortfolioService {
                 .photographerId(image.getPhotographer().getId())
                 .imageUrl(image.getImageUrl())
                 .category(image.getCategory())
+                .caption(image.getCaption())
                 .uploadedAt(image.getUploadedAt())
                 .verificationStatus(image.getVerificationStatus())
                 .flagReason(image.getFlagReason())

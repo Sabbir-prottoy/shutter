@@ -56,3 +56,9 @@ textbelt:
   # literal key — good enough to demonstrate real delivery. Set TEXTBELT_API_KEY
   # to a paid key (https://textbelt.com) for higher volume.
   api-key: ${TEXTBELT_API_KEY:textbelt}
+
+gemini:
+  # Server-side only — never sent to the frontend. Get a key from
+  # https://aistudio.google.com/apikey.
+  api-key: ${GEMINI_API_KEY:}
+  model: ${GEMINI_MODEL:gemini-3.6-flash}

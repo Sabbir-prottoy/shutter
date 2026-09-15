@@ -18,7 +18,7 @@ export default function PortfolioGrid({ images }) {
         >
           <img
             src={image.imageUrl}
-            alt={image.category ? image.category.toLowerCase() : 'Portfolio photo'}
+            alt={image.caption || (image.category ? image.category.toLowerCase() : 'Portfolio photo')}
             className="w-full object-cover"
             loading="lazy"
           />

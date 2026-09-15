@@ -51,6 +51,9 @@ public class PortfolioImage {
     @Column(name = "exif_data", columnDefinition = "TEXT")
     private String exifData;
 
+    @Column(columnDefinition = "TEXT")
+    private String caption;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "verification_status", nullable = false, length = 20)
     @Builder.Default

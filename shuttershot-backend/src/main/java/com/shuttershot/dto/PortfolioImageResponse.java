@@ -21,6 +21,7 @@ public class PortfolioImageResponse {
     private Long photographerId;
     private String imageUrl;
     private ImageCategory category;
+    private String caption;
     private LocalDateTime uploadedAt;
     private VerificationStatus verificationStatus;
     private String flagReason;

@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import Footer from './Footer'
 
 const NAV_ITEMS = [
   { to: '/admin/reviews', label: 'Review Moderation' },
@@ -44,7 +45,7 @@ export default function AdminLayout() {
         </button>
       </aside>
 
-      <div className="min-w-0 flex-1">
+      <div className="flex min-w-0 flex-1 flex-col">
         <div className="border-b border-border p-4 sm:hidden">
           <div className="flex items-center justify-between">
             <div>
@@ -70,9 +71,11 @@ export default function AdminLayout() {
           </nav>
         </div>
 
-        <main className="p-6 sm:p-10">
+        <main className="flex-1 p-6 sm:p-10">
           <Outlet />
         </main>
+
+        <Footer />
       </div>
     </div>
   )

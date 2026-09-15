@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getFlaggedPhotos, rejectPhoto, verifyPhoto } from '../../services/api'
+import { approvePhoto, getPendingPhotos, rejectPhoto } from '../../services/api'
 
 export default function PhotoModeration() {
   const [photos, setPhotos] = useState([])
@@ -13,7 +13,7 @@ export default function PhotoModeration() {
 
   function loadPhotos() {
     setStatus('loading')
-    getFlaggedPhotos()
+    getPendingPhotos()
       .then((data) => {
         setPhotos(data)
         setStatus('ready')
@@ -21,14 +21,14 @@ export default function PhotoModeration() {
       .catch(() => setStatus('error'))
   }
 
-  async function handleVerify(id) {
+  async function handleApprove(id) {
     setError(null)
     setProcessingId(id)
     try {
-      await verifyPhoto(id)
+      await approvePhoto(id)
       setPhotos((prev) => prev.filter((photo) => photo.id !== id))
     } catch (err) {
-      setError(err?.response?.data?.message || "We couldn't verify that photo. Please try again.")
+      setError(err?.response?.data?.message || "We couldn't approve that photo. Please try again.")
     } finally {
       setProcessingId(null)
     }
@@ -53,26 +53,32 @@ export default function PhotoModeration() {
 
   return (
     <div className="space-y-6">
-      <div>
+      <div className="flex items-center gap-3">
         <h1 className="font-display text-2xl font-bold text-ink">Photo moderation</h1>
-        <p className="mt-1 text-ink-muted">
-          Review uploads flagged for missing camera metadata. Verify to publish, or reject to
-          permanently delete.
-        </p>
+        {status === 'ready' && (
+          <span className="rounded-full bg-accent/15 px-2.5 py-0.5 text-sm font-medium text-accent">
+            {photos.length} pending
+          </span>
+        )}
       </div>
+      <p className="-mt-4 text-ink-muted">
+        Every new upload waits here before it can appear on a photographer's public profile.
+        Approve photos that are genuinely the photographer's own work; reject anything that
+        looks AI-generated, stolen, or otherwise not theirs.
+      </p>
 
       {error && <p className="text-sm text-booked">{error}</p>}
 
-      {status === 'loading' && <p className="text-ink-muted">Loading flagged photos…</p>}
+      {status === 'loading' && <p className="text-ink-muted">Loading pending photos…</p>}
 
       {status === 'error' && (
         <p className="text-ink-muted">
-          We couldn't load flagged photos right now. Please check your connection and try again.
+          We couldn't load pending photos right now. Please check your connection and try again.
         </p>
       )}
 
       {status === 'ready' && photos.length === 0 && (
-        <p className="text-ink-muted">No flagged photos waiting for review.</p>
+        <p className="text-ink-muted">No photos waiting for review.</p>
       )}
 
       {status === 'ready' && photos.length > 0 && (
@@ -92,16 +98,20 @@ export default function PhotoModeration() {
                   <span className="text-xs text-ink-muted">Photographer #{photo.photographerId}</span>
                 </div>
 
-                {photo.flagReason && <p className="mt-2 text-sm text-booked">{photo.flagReason}</p>}
+                {photo.flagReason && (
+                  <p className="mt-2 text-sm text-ink-muted">
+                    <span className="font-medium text-ink">Note:</span> {photo.flagReason}
+                  </p>
+                )}
 
                 <div className="mt-3 flex gap-4 text-sm">
                   <button
                     type="button"
                     disabled={processingId === photo.id}
-                    onClick={() => handleVerify(photo.id)}
+                    onClick={() => handleApprove(photo.id)}
                     className="text-accent underline transition-opacity hover:opacity-80 disabled:opacity-60"
                   >
-                    Verify
+                    Approve
                   </button>
                   <button
                     type="button"
