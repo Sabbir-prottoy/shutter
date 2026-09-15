@@ -28,4 +28,8 @@ public class BookingResponse {
     private BookingStatus status;
     private boolean otpVerified;
     private LocalDateTime createdAt;
+
+    // Only populated right after creation (see BookingService.create) — a
+    // stand-in for real SMS delivery, not stored or re-served afterward.
+    private String devOtpCode;
 }

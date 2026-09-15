@@ -1,5 +1,6 @@
 package com.shuttershot.dto;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -16,6 +17,11 @@ public class UpdatePhotographerProfileRequest {
 
     private String name;
     private String phone;
+    private String location;
+
+    @Email(message = "Email must be a valid address")
+    private String email;
+
     private String bio;
     private String profilePhotoUrl;
 

@@ -6,6 +6,7 @@ export default function ImageUploader({ onUpload }) {
   const fileInputRef = useRef(null)
   const [file, setFile] = useState(null)
   const [category, setCategory] = useState('WEDDING')
+  const [caption, setCaption] = useState('')
   const [error, setError] = useState(null)
   const [uploading, setUploading] = useState(false)
 
@@ -20,8 +21,9 @@ export default function ImageUploader({ onUpload }) {
 
     setUploading(true)
     try {
-      await onUpload(file, category)
+      await onUpload(file, category, caption)
       setFile(null)
+      setCaption('')
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
@@ -56,6 +58,15 @@ export default function ImageUploader({ onUpload }) {
           ))}
         </select>
       </div>
+
+      <input
+        type="text"
+        value={caption}
+        onChange={(event) => setCaption(event.target.value)}
+        placeholder="Name or details (optional)"
+        maxLength={200}
+        className="mt-3 w-full rounded-card border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:border-accent"
+      />
 
       {error && <p className="mt-3 text-sm text-booked">{error}</p>}
 

@@ -1,12 +1,15 @@
 package com.shuttershot.service;
 
+import com.shuttershot.dto.OwnPhotographerProfileResponse;
 import com.shuttershot.dto.PhotographerProfileResponse;
 import com.shuttershot.dto.PhotographerSummaryResponse;
 import com.shuttershot.dto.UpdatePhotographerProfileRequest;
+import com.shuttershot.exception.DuplicateResourceException;
 import com.shuttershot.exception.ResourceNotFoundException;
 import com.shuttershot.model.PhotographerProfile;
 import com.shuttershot.model.User;
 import com.shuttershot.repository.PhotographerProfileRepository;
+import com.shuttershot.repository.UserRepository;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +18,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -23,6 +27,8 @@ import java.util.List;
 public class PhotographerService {
 
     private final PhotographerProfileRepository photographerProfileRepository;
+    private final UserRepository userRepository;
+    private final FileStorageService fileStorageService;
 
     @Transactional(readOnly = true)
     public List<PhotographerSummaryResponse> search(String location, String category) {
@@ -53,14 +59,12 @@ public class PhotographerService {
     }
 
     @Transactional(readOnly = true)
-    public PhotographerProfileResponse getOwnProfile(Long authenticatedUserId) {
-        PhotographerProfile profile = photographerProfileRepository.findByUserId(authenticatedUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("Photographer profile not found for current user"));
-        return toProfileResponse(profile);
+    public OwnPhotographerProfileResponse getOwnProfile(Long authenticatedUserId) {
+        return toOwnProfileResponse(findOwnProfile(authenticatedUserId));
     }
 
     @Transactional
-    public PhotographerProfileResponse update(Long id, UpdatePhotographerProfileRequest request, Long authenticatedUserId) {
+    public OwnPhotographerProfileResponse update(Long id, UpdatePhotographerProfileRequest request, Long authenticatedUserId) {
         PhotographerProfile profile = findById(id);
         User user = profile.getUser();
 
@@ -73,6 +77,18 @@ public class PhotographerService {
         }
         if (request.getPhone() != null) {
             user.setPhone(request.getPhone());
+        }
+        if (request.getLocation() != null) {
+            user.setLocation(request.getLocation());
+            // Kept in sync with the public search field so changing your
+            // location here actually changes where clients can find you.
+            profile.setBaseLocation(request.getLocation());
+        }
+        if (request.getEmail() != null && !request.getEmail().equalsIgnoreCase(user.getEmail())) {
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new DuplicateResourceException("An account with this email already exists");
+            }
+            user.setEmail(request.getEmail());
         }
         if (request.getBio() != null) {
             user.setBio(request.getBio());
@@ -90,12 +106,29 @@ public class PhotographerService {
             profile.setYearsExperience(request.getYearsExperience());
         }
 
-        return toProfileResponse(profile);
+        return toOwnProfileResponse(profile);
+    }
+
+    @Transactional
+    public OwnPhotographerProfileResponse updateProfilePhoto(MultipartFile file, Long authenticatedUserId) {
+        PhotographerProfile profile = findOwnProfile(authenticatedUserId);
+        User user = profile.getUser();
+
+        String newUrl = fileStorageService.store(file);
+        fileStorageService.delete(user.getProfilePhotoUrl());
+        user.setProfilePhotoUrl(newUrl);
+
+        return toOwnProfileResponse(profile);
     }
 
     private PhotographerProfile findById(Long id) {
         return photographerProfileRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Photographer profile not found with id: " + id));
+    }
+
+    private PhotographerProfile findOwnProfile(Long authenticatedUserId) {
+        return photographerProfileRepository.findByUserId(authenticatedUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Photographer profile not found for current user"));
     }
 
     private PhotographerSummaryResponse toSummary(PhotographerProfile profile) {
@@ -126,6 +159,25 @@ public class PhotographerService {
                 .ratingAvg(profile.getRatingAvg())
                 .totalReviews(profile.getTotalReviews())
                 .verified(user.isVerified())
+                .build();
+    }
+
+    private OwnPhotographerProfileResponse toOwnProfileResponse(PhotographerProfile profile) {
+        User user = profile.getUser();
+        return OwnPhotographerProfileResponse.builder()
+                .id(profile.getId())
+                .name(user.getName())
+                .bio(user.getBio())
+                .profilePhotoUrl(user.getProfilePhotoUrl())
+                .baseLocation(profile.getBaseLocation())
+                .specialties(profile.getSpecialties())
+                .yearsExperience(profile.getYearsExperience())
+                .ratingAvg(profile.getRatingAvg())
+                .totalReviews(profile.getTotalReviews())
+                .verified(user.isVerified())
+                .phone(user.getPhone())
+                .location(user.getLocation())
+                .email(user.getEmail())
                 .build();
     }
 }

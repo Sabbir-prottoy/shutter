@@ -44,14 +44,14 @@ public class AdminController {
         return ResponseEntity.ok(reviewService.reject(id));
     }
 
-    @GetMapping("/photos/flagged")
-    public ResponseEntity<List<PortfolioImageResponse>> flaggedPhotos() {
-        return ResponseEntity.ok(portfolioService.listFlagged());
+    @GetMapping("/photos/pending")
+    public ResponseEntity<List<PortfolioImageResponse>> pendingPhotos() {
+        return ResponseEntity.ok(portfolioService.listPending());
     }
 
-    @PutMapping("/photos/{id}/verify")
-    public ResponseEntity<PortfolioImageResponse> verifyPhoto(@PathVariable Long id) {
-        return ResponseEntity.ok(portfolioService.verifyByAdmin(id));
+    @PutMapping("/photos/{id}/approve")
+    public ResponseEntity<PortfolioImageResponse> approvePhoto(@PathVariable Long id) {
+        return ResponseEntity.ok(portfolioService.approveByAdmin(id));
     }
 
     @PutMapping("/photos/{id}/reject")

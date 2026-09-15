@@ -55,7 +55,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**", "/api/otp/**", "/uploads/**").permitAll()
+                        .requestMatchers("/api/auth/**", "/api/otp/**", "/uploads/**", "/api/chatbot/**").permitAll()
                         // Must precede the broader GET /api/photographers/** permitAll rule below —
                         // Spring Security's matchers are evaluated in order, first match wins, and
                         // /me resolves from the JWT principal so it can't be public.

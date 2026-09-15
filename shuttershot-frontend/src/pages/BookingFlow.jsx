@@ -43,6 +43,10 @@ export default function BookingFlow() {
   const [otpError, setOtpError] = useState(null)
   const [otpSubmitting, setOtpSubmitting] = useState(false)
   const [resendStatus, setResendStatus] = useState('idle')
+  // No SMS gateway currently delivers to real numbers for this project (see
+  // OtpService's docs on the backend) — the code is shown here directly as
+  // a stand-in so booking stays completable end to end.
+  const [devOtpCode, setDevOtpCode] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -86,6 +90,7 @@ export default function BookingFlow() {
         timeSlot,
       })
       setBooking(result)
+      setDevOtpCode(result.devOtpCode || null)
       setStep('otp')
     } catch (error) {
       setFormError(
@@ -121,7 +126,8 @@ export default function BookingFlow() {
   async function handleResend() {
     setResendStatus('sending')
     try {
-      await resendOtp(clientPhone)
+      const result = await resendOtp(clientPhone)
+      setDevOtpCode(result?.devOtpCode || null)
       setResendStatus('sent')
     } catch {
       setResendStatus('idle')
@@ -303,6 +309,17 @@ export default function BookingFlow() {
               We sent a 6-digit verification code to <span className="text-ink">{clientPhone}</span>.
               Enter it below to confirm your request.
             </p>
+
+            {devOtpCode && (
+              <div className="rounded-card border border-accent/30 bg-accent/10 px-4 py-3">
+                <p className="text-sm text-ink-muted">
+                  SMS delivery isn't wired up yet for this demo, so here's your code directly:
+                </p>
+                <p className="mt-1 font-display text-2xl font-bold tracking-widest text-accent">
+                  {devOtpCode}
+                </p>
+              </div>
+            )}
 
             <OtpInput onChange={setOtpCode} />
 
