@@ -13,9 +13,12 @@ import AdminPanel from './pages/AdminPanel/AdminPanel'
 import ReviewModeration from './pages/AdminPanel/ReviewModeration'
 import PhotoModeration from './pages/AdminPanel/PhotoModeration'
 import UserManagement from './pages/AdminPanel/UserManagement'
+import StaffManagement from './pages/AdminPanel/StaffManagement'
 import FAQ from './pages/FAQ'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import RegisterUser from './pages/RegisterUser'
+import AccountSettings from './pages/AccountSettings'
 import AdminLogin from './pages/AdminLogin'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
@@ -37,6 +40,7 @@ export default function App() {
 
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/register/user" element={<RegisterUser />} />
         <Route path="/admin/login" element={<AdminLogin />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
@@ -52,12 +56,24 @@ export default function App() {
           </Route>
         </Route>
 
-        <Route element={<ProtectedRoute requiredRole="ADMIN" />}>
+        <Route element={<ProtectedRoute requiredRole="CUSTOMER" />}>
+          <Route path="/account" element={<AccountSettings />} />
+        </Route>
+
+        <Route element={<ProtectedRoute requiredRole={['ADMIN', 'MODERATOR']} />}>
           <Route element={<AdminLayout />}>
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/admin/reviews" element={<ReviewModeration />} />
             <Route path="/admin/photos" element={<PhotoModeration />} />
             <Route path="/admin/users" element={<UserManagement />} />
+            <Route
+              path="/admin/manage-admins"
+              element={<StaffManagement role="ADMIN" title="Manage Admin" roleLabel="admin" />}
+            />
+            <Route
+              path="/admin/manage-moderators"
+              element={<StaffManagement role="MODERATOR" title="Manage Moderator" roleLabel="moderator" />}
+            />
           </Route>
         </Route>
 

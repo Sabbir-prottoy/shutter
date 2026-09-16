@@ -10,10 +10,12 @@ import com.shuttershot.model.Booking;
 import com.shuttershot.model.BookingStatus;
 import com.shuttershot.model.Package;
 import com.shuttershot.model.PhotographerProfile;
+import com.shuttershot.model.User;
 import com.shuttershot.repository.AvailabilityRepository;
 import com.shuttershot.repository.BookingRepository;
 import com.shuttershot.repository.PackageRepository;
 import com.shuttershot.repository.PhotographerProfileRepository;
+import com.shuttershot.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -30,10 +32,11 @@ public class BookingService {
     private final PackageRepository packageRepository;
     private final PhotographerProfileRepository photographerProfileRepository;
     private final AvailabilityRepository availabilityRepository;
+    private final UserRepository userRepository;
     private final OtpService otpService;
 
     @Transactional
-    public BookingResponse create(CreateBookingRequest request) {
+    public BookingResponse create(CreateBookingRequest request, Long customerUserId) {
         PhotographerProfile photographer = photographerProfileRepository.findById(request.getPhotographerId())
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Photographer not found with id: " + request.getPhotographerId()));
@@ -55,9 +58,15 @@ public class BookingService {
                     throw new InvalidRequestException("Photographer is not available on the selected date");
                 });
 
+        User customer = customerUserId != null
+                ? userRepository.findById(customerUserId)
+                        .orElseThrow(() -> new ResourceNotFoundException("User not found"))
+                : null;
+
         Booking booking = Booking.builder()
                 .photographer(photographer)
                 .servicePackage(pkg)
+                .customer(customer)
                 .clientName(request.getClientName())
                 .clientPhone(request.getClientPhone())
                 .clientEmail(request.getClientEmail())
@@ -94,6 +103,13 @@ public class BookingService {
         }
 
         return bookingRepository.findByPhotographerId(photographerId).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<BookingResponse> listByCustomer(Long customerUserId) {
+        return bookingRepository.findByCustomerIdOrderByBookingDateDesc(customerUserId).stream()
                 .map(this::toResponse)
                 .toList();
     }
@@ -158,7 +174,11 @@ public class BookingService {
         return BookingResponse.builder()
                 .id(booking.getId())
                 .photographerId(booking.getPhotographer().getId())
+                .photographerName(booking.getPhotographer().getUser().getName())
                 .packageId(booking.getServicePackage().getId())
+                .packageTitle(booking.getServicePackage().getTitle())
+                .packagePrice(booking.getServicePackage().getPrice())
+                .customerId(booking.getCustomer() != null ? booking.getCustomer().getId() : null)
                 .clientName(booking.getClientName())
                 .clientPhone(booking.getClientPhone())
                 .clientEmail(booking.getClientEmail())

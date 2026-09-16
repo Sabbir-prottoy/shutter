@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -19,7 +20,11 @@ public class BookingResponse {
 
     private Long id;
     private Long photographerId;
+    private String photographerName;
     private Long packageId;
+    private String packageTitle;
+    private BigDecimal packagePrice;
+    private Long customerId;
     private String clientName;
     private String clientPhone;
     private String clientEmail;

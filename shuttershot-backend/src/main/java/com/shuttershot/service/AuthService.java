@@ -54,6 +54,27 @@ public class AuthService {
         return toAuthResponse(user, token);
     }
 
+    @Transactional
+    public AuthResponse registerCustomer(RegisterRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new DuplicateResourceException("An account with this email already exists");
+        }
+
+        User user = User.builder()
+                .role(Role.CUSTOMER)
+                .name(request.getName())
+                .email(request.getEmail())
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .phone(request.getPhone())
+                .location(request.getLocation())
+                .verified(false)
+                .build();
+        user = userRepository.save(user);
+
+        String token = jwtService.generateToken(new UserPrincipal(user), user.getId(), user.getRole().name());
+        return toAuthResponse(user, token);
+    }
+
     public AuthResponse login(LoginRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())

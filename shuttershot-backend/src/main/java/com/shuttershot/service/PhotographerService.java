@@ -7,6 +7,7 @@ import com.shuttershot.dto.UpdatePhotographerProfileRequest;
 import com.shuttershot.exception.DuplicateResourceException;
 import com.shuttershot.exception.ResourceNotFoundException;
 import com.shuttershot.model.PhotographerProfile;
+import com.shuttershot.model.Role;
 import com.shuttershot.model.User;
 import com.shuttershot.repository.PhotographerProfileRepository;
 import com.shuttershot.repository.UserRepository;
@@ -32,7 +33,12 @@ public class PhotographerService {
 
     @Transactional(readOnly = true)
     public List<PhotographerSummaryResponse> search(String location, String category) {
-        Specification<PhotographerProfile> spec = Specification.where(null);
+        // Only ever surface accounts that are actually photographers — an
+        // account whose role was changed after its profile row was created
+        // (e.g. promoted to ADMIN) should stop appearing publicly, and a
+        // customer account should never appear here at all.
+        Specification<PhotographerProfile> spec = Specification
+                .where((root, query, cb) -> cb.equal(root.get("user").get("role"), Role.PHOTOGRAPHER));
 
         if (StringUtils.hasText(location)) {
             String pattern = "%" + location.toLowerCase() + "%";
@@ -122,8 +128,12 @@ public class PhotographerService {
     }
 
     private PhotographerProfile findById(Long id) {
-        return photographerProfileRepository.findById(id)
+        PhotographerProfile profile = photographerProfileRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Photographer profile not found with id: " + id));
+        if (profile.getUser().getRole() != Role.PHOTOGRAPHER) {
+            throw new ResourceNotFoundException("Photographer profile not found with id: " + id);
+        }
+        return profile;
     }
 
     private PhotographerProfile findOwnProfile(Long authenticatedUserId) {

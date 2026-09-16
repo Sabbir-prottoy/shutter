@@ -23,7 +23,12 @@ export default function Login() {
     try {
       const result = await loginRequest({ email, password })
       login(result)
-      const defaultPath = result.role === 'ADMIN' ? '/admin' : '/dashboard'
+      const defaultPath =
+        result.role === 'ADMIN' || result.role === 'MODERATOR'
+          ? '/admin'
+          : result.role === 'CUSTOMER'
+            ? '/account'
+            : '/dashboard'
       navigate(location.state?.from?.pathname || defaultPath, { replace: true })
     } catch (err) {
       setError(err?.response?.data?.message || 'Invalid email or password.')
@@ -79,6 +84,10 @@ export default function Login() {
           New to ShutterShot?{' '}
           <Link to="/register" className="text-accent underline">
             Join as a photographer
+          </Link>{' '}
+          or{' '}
+          <Link to="/register/user" className="text-accent underline">
+            join as a user
           </Link>
         </p>
       </main>

@@ -22,6 +22,19 @@ const loginLinkClass = ({ isActive }) =>
 const ctaButtonClass =
   'rounded-card bg-accent-gradient px-3 py-2 text-sm font-medium text-white shadow-card transition-shadow hover:shadow-hover active:animate-nav-bounce sm:px-4'
 
+function ownAreaFor(role) {
+  if (role === 'ADMIN' || role === 'MODERATOR') return '/admin'
+  if (role === 'CUSTOMER') return '/account'
+  return '/dashboard'
+}
+
+function ownAreaLabel(role) {
+  if (role === 'ADMIN') return 'Admin panel'
+  if (role === 'MODERATOR') return 'Moderator panel'
+  if (role === 'CUSTOMER') return 'My account'
+  return 'Dashboard'
+}
+
 export default function Navbar() {
   const { isAuthenticated, user } = useAuth()
 
@@ -49,10 +62,10 @@ export default function Navbar() {
 
           {isAuthenticated ? (
             <Link
-              to={user?.role === 'ADMIN' ? '/admin' : '/dashboard'}
+              to={ownAreaFor(user?.role)}
               className="rounded-card bg-accent-gradient px-3 py-2 text-sm font-medium text-white shadow-card transition-shadow hover:shadow-hover active:animate-nav-glow sm:px-4"
             >
-              {user?.role === 'ADMIN' ? 'Admin panel' : 'Dashboard'}
+              {ownAreaLabel(user?.role)}
             </Link>
           ) : (
             <>

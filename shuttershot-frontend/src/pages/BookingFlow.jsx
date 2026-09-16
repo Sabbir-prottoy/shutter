@@ -4,9 +4,11 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import OtpInput from '../components/OtpInput'
+import { useAuth } from '../context/AuthContext'
 import {
   confirmBookingOtp,
   createBooking,
+  getMyAccount,
   getPhotographer,
   getPhotographerPackages,
   resendOtp,
@@ -23,6 +25,7 @@ const STEPS = [
 export default function BookingFlow() {
   const { photographerId } = useParams()
   const [searchParams] = useSearchParams()
+  const { user } = useAuth()
 
   const [profile, setProfile] = useState(null)
   const [packages, setPackages] = useState([])
@@ -68,6 +71,27 @@ export default function BookingFlow() {
       cancelled = true
     }
   }, [photographerId])
+
+  useEffect(() => {
+    if (user?.role !== 'CUSTOMER') return
+    let cancelled = false
+
+    getMyAccount()
+      .then((account) => {
+        if (cancelled) return
+        setClientName((current) => current || account.name || '')
+        setClientPhone((current) => current || account.phone || '')
+        setClientEmail((current) => current || account.email || '')
+      })
+      .catch(() => {
+        // Prefill is a convenience, not required — booking still works
+        // with the fields left blank for the user to fill in themselves.
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [user])
 
   async function handleSubmitDetails(event) {
     event.preventDefault()

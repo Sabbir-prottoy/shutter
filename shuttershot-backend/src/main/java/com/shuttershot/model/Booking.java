@@ -42,6 +42,12 @@ public class Booking {
     @JoinColumn(name = "package_id", nullable = false)
     private Package servicePackage;
 
+    // Null for guest bookings — only set when the person booking was logged
+    // in at the time, so they can look the booking up under their account.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "customer_user_id")
+    private User customer;
+
     @Column(name = "client_name", nullable = false)
     private String clientName;
 

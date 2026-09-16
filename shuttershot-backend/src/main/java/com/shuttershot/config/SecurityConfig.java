@@ -63,7 +63,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/photographers/**", "/api/reviews").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/bookings", "/api/bookings/*/confirm-otp", "/api/reviews")
                         .permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // Managing admin/moderator accounts is ADMIN-only; must precede
+                        // the broader /api/admin/** rule below for the same first-match-wins reason.
+                        .requestMatchers("/api/admin/staff", "/api/admin/staff/**").hasRole("ADMIN")
+                        .requestMatchers("/api/admin/**").hasAnyRole("ADMIN", "MODERATOR")
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())

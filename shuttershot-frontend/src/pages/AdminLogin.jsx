@@ -22,8 +22,8 @@ export default function AdminLogin() {
 
     try {
       const result = await loginRequest({ email, password })
-      if (result.role !== 'ADMIN') {
-        setError('This portal is for admin accounts only.')
+      if (result.role !== 'ADMIN' && result.role !== 'MODERATOR') {
+        setError('This portal is for admin and moderator accounts only.')
         return
       }
       login(result)

@@ -2,10 +2,17 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Footer from './Footer'
 
-const NAV_ITEMS = [
+const BASE_NAV_ITEMS = [
   { to: '/admin/reviews', label: 'Review Moderation' },
   { to: '/admin/photos', label: 'Photo Moderation' },
   { to: '/admin/users', label: 'User Management' },
+]
+
+// Adding or removing staff accounts is an admin-only power, kept out of the
+// sidebar entirely for moderators rather than shown and then rejected.
+const ADMIN_ONLY_NAV_ITEMS = [
+  { to: '/admin/manage-admins', label: 'Manage Admin' },
+  { to: '/admin/manage-moderators', label: 'Manage Moderator' },
 ]
 
 const desktopLinkClass = ({ isActive }) =>
@@ -18,6 +25,7 @@ const mobileLinkClass = ({ isActive }) =>
 
 export default function AdminLayout() {
   const { user, logout } = useAuth()
+  const navItems = user?.role === 'ADMIN' ? [...BASE_NAV_ITEMS, ...ADMIN_ONLY_NAV_ITEMS] : BASE_NAV_ITEMS
 
   return (
     <div className="flex min-h-screen bg-canvas">
@@ -25,11 +33,13 @@ export default function AdminLayout() {
         <Link to="/" className="font-display text-xl font-bold text-ink">
           ShutterShot
         </Link>
-        <p className="mt-1 text-xs font-medium uppercase tracking-wide text-accent">Admin</p>
+        <p className="mt-1 text-xs font-medium uppercase tracking-wide text-accent">
+          {user?.role === 'MODERATOR' ? 'Moderator' : 'Admin'}
+        </p>
         {user?.name && <p className="mt-1 truncate text-sm text-ink-muted">{user.name}</p>}
 
         <nav className="mt-8 flex flex-col gap-1">
-          {NAV_ITEMS.map((item) => (
+          {navItems.map((item) => (
             <NavLink key={item.to} to={item.to} className={desktopLinkClass}>
               {item.label}
             </NavLink>
@@ -52,7 +62,9 @@ export default function AdminLayout() {
               <Link to="/" className="font-display text-lg font-bold text-ink">
                 ShutterShot
               </Link>
-              <p className="text-xs font-medium uppercase tracking-wide text-accent">Admin</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-accent">
+                {user?.role === 'MODERATOR' ? 'Moderator' : 'Admin'}
+              </p>
             </div>
             <button
               type="button"
@@ -63,7 +75,7 @@ export default function AdminLayout() {
             </button>
           </div>
           <nav className="mt-3 flex gap-4 overflow-x-auto pb-1">
-            {NAV_ITEMS.map((item) => (
+            {navItems.map((item) => (
               <NavLink key={item.to} to={item.to} className={mobileLinkClass}>
                 {item.label}
               </NavLink>

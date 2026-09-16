@@ -28,12 +28,31 @@ export function registerRequest(payload) {
   return api.post('/auth/register', payload).then((res) => res.data)
 }
 
+export function registerCustomerRequest(payload) {
+  return api.post('/auth/register-customer', payload).then((res) => res.data)
+}
+
 export function forgotPasswordRequest(payload) {
   return api.post('/auth/forgot-password', payload).then((res) => res.data)
 }
 
 export function resetPasswordRequest(payload) {
   return api.post('/auth/reset-password', payload).then((res) => res.data)
+}
+
+// Account (customer, own profile)
+export function getMyAccount() {
+  return api.get('/account/me').then((res) => res.data)
+}
+
+export function updateMyAccount(payload) {
+  return api.put('/account/me', payload).then((res) => res.data)
+}
+
+export function uploadAccountPhoto(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return api.post('/account/me/photo', formData).then((res) => res.data)
 }
 
 // Photographer (dashboard, own profile)
@@ -144,6 +163,11 @@ export function getMyBookings(photographerId) {
   return api.get('/bookings', { params: { photographerId } }).then((res) => res.data)
 }
 
+// Bookings (customer account, bookings I made while logged in)
+export function getMyBookingsAsCustomer() {
+  return api.get('/bookings/mine').then((res) => res.data)
+}
+
 export function updateBookingStatus(id, status) {
   return api.put(`/bookings/${id}/status`, { status }).then((res) => res.data)
 }
@@ -181,12 +205,18 @@ export function verifyUser(id) {
   return api.put(`/admin/users/${id}/verify`).then((res) => res.data)
 }
 
+// Permanently removes the account — see AdminUserService.remove on the backend.
 export function banUser(id) {
   return api.put(`/admin/users/${id}/ban`).then((res) => res.data)
 }
 
-export function unbanUser(id) {
-  return api.put(`/admin/users/${id}/unban`).then((res) => res.data)
+// Staff management (admin/moderator accounts, ADMIN-only)
+export function getAdminStaff(role) {
+  return api.get('/admin/staff', { params: { role } }).then((res) => res.data)
+}
+
+export function createStaffAccount(payload) {
+  return api.post('/admin/staff', payload).then((res) => res.data)
 }
 
 // Chatbot (public, site-wide)

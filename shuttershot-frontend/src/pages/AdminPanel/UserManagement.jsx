@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { banUser, getAdminUsers, unbanUser, verifyUser } from '../../services/api'
+import { banUser, getAdminUsers, verifyUser } from '../../services/api'
 
 export default function UserManagement() {
   const [users, setUsers] = useState([])
@@ -34,19 +34,22 @@ export default function UserManagement() {
     }
   }
 
-  async function handleToggleBan(user) {
-    const action = user.enabled ? 'ban' : 'unban'
-    if (user.enabled && !window.confirm(`Ban ${user.name}? They won't be able to log in until unbanned.`)) {
+  async function handleBan(user) {
+    if (
+      !window.confirm(
+        `Ban ${user.name}? This permanently deletes their profile, portfolio, packages, and booking history from ShutterShot — this cannot be undone.`,
+      )
+    ) {
       return
     }
 
     setError(null)
     setProcessingId(user.id)
     try {
-      const updated = user.enabled ? await banUser(user.id) : await unbanUser(user.id)
-      setUsers((prev) => prev.map((u) => (u.id === user.id ? updated : u)))
+      await banUser(user.id)
+      setUsers((prev) => prev.filter((u) => u.id !== user.id))
     } catch (err) {
-      setError(err?.response?.data?.message || `We couldn't ${action} that account. Please try again.`)
+      setError(err?.response?.data?.message || "We couldn't remove that account. Please try again.")
     } finally {
       setProcessingId(null)
     }
@@ -56,7 +59,9 @@ export default function UserManagement() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-bold text-ink">User management</h1>
-        <p className="mt-1 text-ink-muted">Verify photographers or suspend accounts that break the rules.</p>
+        <p className="mt-1 text-ink-muted">
+          Verify photographers, or permanently remove accounts that break the rules.
+        </p>
       </div>
 
       {error && <p className="text-sm text-booked">{error}</p>}
@@ -82,22 +87,13 @@ export default function UserManagement() {
                   {user.phone && <p className="text-sm text-ink-muted">{user.phone}</p>}
                   {user.location && <p className="text-sm text-ink-muted">{user.location}</p>}
                 </div>
-                <div className="flex shrink-0 flex-col items-end gap-1.5">
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      user.verified ? 'bg-free/20 text-free' : 'bg-border text-ink-muted'
-                    }`}
-                  >
-                    {user.verified ? 'Verified' : 'Unverified'}
-                  </span>
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                      user.enabled ? 'bg-free/20 text-free' : 'bg-booked/20 text-booked'
-                    }`}
-                  >
-                    {user.enabled ? 'Active' : 'Banned'}
-                  </span>
-                </div>
+                <span
+                  className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    user.verified ? 'bg-free/20 text-free' : 'bg-border text-ink-muted'
+                  }`}
+                >
+                  {user.verified ? 'Verified' : 'Unverified'}
+                </span>
               </div>
 
               <div className="mt-4 flex gap-4 text-sm">
@@ -114,10 +110,10 @@ export default function UserManagement() {
                 <button
                   type="button"
                   disabled={processingId === user.id}
-                  onClick={() => handleToggleBan(user)}
-                  className="text-ink-muted underline transition-colors hover:text-accent disabled:opacity-60"
+                  onClick={() => handleBan(user)}
+                  className="text-booked underline transition-opacity hover:opacity-80 disabled:opacity-60"
                 >
-                  {user.enabled ? 'Ban' : 'Unban'}
+                  Ban
                 </button>
               </div>
             </div>

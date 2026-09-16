@@ -10,6 +10,8 @@ import java.util.List;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
+    List<Review> findByPhotographerId(Long photographerId);
+
     List<Review> findByPhotographerIdAndStatus(Long photographerId, ReviewStatus status);
 
     List<Review> findByStatus(ReviewStatus status);

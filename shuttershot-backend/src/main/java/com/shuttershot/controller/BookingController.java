@@ -30,8 +30,16 @@ public class BookingController {
     private final BookingService bookingService;
 
     @PostMapping
-    public ResponseEntity<BookingResponse> create(@Valid @RequestBody CreateBookingRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.create(request));
+    public ResponseEntity<BookingResponse> create(
+            @Valid @RequestBody CreateBookingRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        Long customerUserId = principal != null ? principal.getId() : null;
+        return ResponseEntity.status(HttpStatus.CREATED).body(bookingService.create(request, customerUserId));
+    }
+
+    @GetMapping("/mine")
+    public ResponseEntity<List<BookingResponse>> listMine(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(bookingService.listByCustomer(principal.getId()));
     }
 
     @PostMapping("/{id}/confirm-otp")

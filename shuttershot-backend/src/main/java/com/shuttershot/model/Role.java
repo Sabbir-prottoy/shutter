@@ -2,5 +2,7 @@ package com.shuttershot.model;
 
 public enum Role {
     PHOTOGRAPHER,
-    ADMIN
+    CUSTOMER,
+    ADMIN,
+    MODERATOR
 }
