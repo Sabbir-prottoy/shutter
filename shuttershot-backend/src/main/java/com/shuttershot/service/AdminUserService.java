@@ -24,13 +24,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.security.SecureRandom;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -38,11 +36,10 @@ import java.util.List;
 public class AdminUserService {
 
     private static final Logger log = LoggerFactory.getLogger(AdminUserService.class);
-    private static final String PASSWORD_UPPER = "ABCDEFGHJKLMNPQRSTUVWXYZ";
-    private static final String PASSWORD_LOWER = "abcdefghijkmnopqrstuvwxyz";
-    private static final String PASSWORD_DIGITS = "23456789";
-    private static final String PASSWORD_SYMBOLS = "!@#$%&*";
-    private static final SecureRandom RANDOM = new SecureRandom();
+    // The original, pre-existing admin account — the only one allowed to
+    // manage staff accounts, and never itself removable or password-exposed
+    // through this feature.
+    private static final String MAIN_ADMIN_EMAIL = "admin@shuttershot.com";
 
     private final UserRepository userRepository;
     private final PhotographerProfileRepository photographerProfileRepository;
@@ -63,6 +60,17 @@ public class AdminUserService {
     public List<AdminUserResponse> listUsers(Role role) {
         List<User> users = role != null ? userRepository.findByRole(role) : userRepository.findAll();
         return users.stream().map(this::toResponse).toList();
+    }
+
+    // Staff management (list/create/remove) is exclusively the main admin's
+    // privilege — every method here starts by checking that.
+    @Transactional(readOnly = true)
+    public List<StaffAccountResponse> listStaff(Role role, Long actingAdminId) {
+        requireMainAdmin(actingAdminId, "view");
+        if (role != Role.ADMIN && role != Role.MODERATOR) {
+            throw new InvalidRequestException("Staff accounts must be either ADMIN or MODERATOR");
+        }
+        return userRepository.findByRole(role).stream().map(this::toStaffResponse).toList();
     }
 
     @Transactional
@@ -106,8 +114,32 @@ public class AdminUserService {
         userRepository.delete(user);
     }
 
+    // Permanently removes an admin/moderator account. Only the main admin
+    // may call this, and the main admin's own account can never be the target.
     @Transactional
-    public StaffAccountResponse createStaff(CreateStaffAccountRequest request) {
+    public void removeStaff(Long userId, Long actingAdminId) {
+        requireMainAdmin(actingAdminId, "remove");
+
+        User user = findById(userId);
+        if (user.getRole() != Role.ADMIN && user.getRole() != Role.MODERATOR) {
+            throw new InvalidRequestException("This account is not a staff account");
+        }
+        if (MAIN_ADMIN_EMAIL.equalsIgnoreCase(user.getEmail())) {
+            throw new InvalidRequestException("The main admin account can't be removed");
+        }
+
+        bookingRepository.clearCustomerReference(userId);
+        passwordResetTokenRepository.deleteByUserId(userId);
+        fileStorageService.delete(user.getProfilePhotoUrl());
+        userRepository.delete(user);
+    }
+
+    // Only the main admin may create staff accounts, and the password is
+    // whatever they chose for it — not auto-generated.
+    @Transactional
+    public StaffAccountResponse createStaff(CreateStaffAccountRequest request, Long actingAdminId) {
+        requireMainAdmin(actingAdminId, "add");
+
         if (request.getRole() != Role.ADMIN && request.getRole() != Role.MODERATOR) {
             throw new InvalidRequestException("Staff accounts must be either ADMIN or MODERATOR");
         }
@@ -115,25 +147,26 @@ public class AdminUserService {
             throw new DuplicateResourceException("An account with this email already exists");
         }
 
-        String generatedPassword = generateTemporaryPassword();
         User user = User.builder()
                 .role(request.getRole())
                 .name(request.getName())
                 .email(request.getEmail())
-                .passwordHash(passwordEncoder.encode(generatedPassword))
+                .passwordHash(passwordEncoder.encode(request.getPassword()))
+                .storedPassword(request.getPassword())
                 .verified(true)
                 .build();
         user = userRepository.save(user);
 
-        sendCredentialsEmail(user, generatedPassword);
+        sendCredentialsEmail(user, request.getPassword());
 
-        return StaffAccountResponse.builder()
-                .id(user.getId())
-                .role(user.getRole())
-                .name(user.getName())
-                .email(user.getEmail())
-                .generatedPassword(generatedPassword)
-                .build();
+        return toStaffResponse(user);
+    }
+
+    private void requireMainAdmin(Long actingAdminId, String action) {
+        User actingUser = findById(actingAdminId);
+        if (!MAIN_ADMIN_EMAIL.equalsIgnoreCase(actingUser.getEmail())) {
+            throw new AccessDeniedException("Only the main admin can " + action + " staff accounts");
+        }
     }
 
     private void sendCredentialsEmail(User user, String password) {
@@ -148,32 +181,14 @@ public class AdminUserService {
                             + "An account has been created for you on ShutterShot with " + roleLabel
                             + " access.\n\n"
                             + "Email: " + user.getEmail() + "\n"
-                            + "Temporary password: " + password + "\n\n"
-                            + "Sign in at the admin portal and change your password as soon as possible."
+                            + "Password: " + password + "\n\n"
+                            + "Sign in at the admin portal."
             );
             mailSender.send(message);
         } catch (MailException ex) {
-            log.warn("Could not send staff credentials email to {} (is MAIL_USERNAME/MAIL_PASSWORD configured?) "
-                    + "— generated password: {}", user.getEmail(), password, ex);
+            log.warn("Could not send staff credentials email to {} (is MAIL_USERNAME/MAIL_PASSWORD configured?)",
+                    user.getEmail(), ex);
         }
-    }
-
-    private String generateTemporaryPassword() {
-        List<Character> chars = new ArrayList<>();
-        chars.add(PASSWORD_UPPER.charAt(RANDOM.nextInt(PASSWORD_UPPER.length())));
-        chars.add(PASSWORD_LOWER.charAt(RANDOM.nextInt(PASSWORD_LOWER.length())));
-        chars.add(PASSWORD_DIGITS.charAt(RANDOM.nextInt(PASSWORD_DIGITS.length())));
-        chars.add(PASSWORD_SYMBOLS.charAt(RANDOM.nextInt(PASSWORD_SYMBOLS.length())));
-
-        String all = PASSWORD_UPPER + PASSWORD_LOWER + PASSWORD_DIGITS + PASSWORD_SYMBOLS;
-        for (int i = chars.size(); i < 12; i++) {
-            chars.add(all.charAt(RANDOM.nextInt(all.length())));
-        }
-
-        Collections.shuffle(chars, RANDOM);
-        StringBuilder password = new StringBuilder(chars.size());
-        chars.forEach(password::append);
-        return password.toString();
     }
 
     private User findById(Long id) {
@@ -191,6 +206,18 @@ public class AdminUserService {
                 .location(user.getLocation())
                 .verified(user.isVerified())
                 .enabled(user.isEnabled())
+                .createdAt(user.getCreatedAt())
+                .build();
+    }
+
+    private StaffAccountResponse toStaffResponse(User user) {
+        boolean isMainAdmin = MAIN_ADMIN_EMAIL.equalsIgnoreCase(user.getEmail());
+        return StaffAccountResponse.builder()
+                .id(user.getId())
+                .role(user.getRole())
+                .name(user.getName())
+                .email(user.getEmail())
+                .password(isMainAdmin ? null : user.getStoredPassword())
                 .createdAt(user.getCreatedAt())
                 .build();
     }

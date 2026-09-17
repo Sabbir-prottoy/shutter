@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -86,16 +87,30 @@ public class AdminController {
         return ResponseEntity.noContent().build();
     }
 
-    // Staff management (admin and moderator accounts) — restricted to ADMIN
-    // only at the security-filter level, separately from the general
-    // /api/admin/** access ADMIN and MODERATOR share.
+    // Staff management (admin and moderator accounts) — reachable by any
+    // ADMIN at the security-filter level, but AdminUserService enforces that
+    // only the main admin can actually list, add, or remove staff.
     @GetMapping("/staff")
-    public ResponseEntity<List<AdminUserResponse>> listStaff(@RequestParam Role role) {
-        return ResponseEntity.ok(adminUserService.listUsers(role));
+    public ResponseEntity<List<StaffAccountResponse>> listStaff(
+            @RequestParam Role role,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(adminUserService.listStaff(role, principal.getId()));
     }
 
     @PostMapping("/staff")
-    public ResponseEntity<StaffAccountResponse> createStaff(@Valid @RequestBody CreateStaffAccountRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(adminUserService.createStaff(request));
+    public ResponseEntity<StaffAccountResponse> createStaff(
+            @Valid @RequestBody CreateStaffAccountRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(adminUserService.createStaff(request, principal.getId()));
+    }
+
+    // The main admin account is protected inside removeStaff — no path here
+    // can delete it.
+    @DeleteMapping("/staff/{id}")
+    public ResponseEntity<Void> removeStaff(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        adminUserService.removeStaff(id, principal.getId());
+        return ResponseEntity.noContent().build();
     }
 }

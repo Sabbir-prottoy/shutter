@@ -219,6 +219,12 @@ export function createStaffAccount(payload) {
   return api.post('/admin/staff', payload).then((res) => res.data)
 }
 
+// Permanently removes an admin/moderator account (the main admin is
+// protected on the backend regardless of what's sent here).
+export function removeStaffAccount(id) {
+  return api.delete(`/admin/staff/${id}`).then((res) => res.data)
+}
+
 // Chatbot (public, site-wide)
 export function askChatbot(message, history) {
   return api.post('/chatbot/ask', { message, history }).then((res) => res.data)

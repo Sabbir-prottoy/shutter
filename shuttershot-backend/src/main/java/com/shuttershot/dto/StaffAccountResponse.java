@@ -7,6 +7,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -19,8 +21,11 @@ public class StaffAccountResponse {
     private String name;
     private String email;
 
-    // Shown once, right after creation, so the admin can hand it to the new
-    // staff member directly if the credentials email doesn't land (e.g. mail
-    // isn't configured in this environment) — never re-served afterward.
-    private String generatedPassword;
+    // The password the main admin set for this account, kept viewable in the
+    // staff list so it can be looked back up later. Null if the account
+    // holder has since changed their own password, since the stored value
+    // would no longer be accurate.
+    private String password;
+
+    private LocalDateTime createdAt;
 }

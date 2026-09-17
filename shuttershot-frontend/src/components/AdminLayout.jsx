@@ -1,5 +1,6 @@
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { MAIN_ADMIN_EMAIL } from '../constants'
 import Footer from './Footer'
 
 const BASE_NAV_ITEMS = [
@@ -8,9 +9,10 @@ const BASE_NAV_ITEMS = [
   { to: '/admin/users', label: 'User Management' },
 ]
 
-// Adding or removing staff accounts is an admin-only power, kept out of the
-// sidebar entirely for moderators rather than shown and then rejected.
-const ADMIN_ONLY_NAV_ITEMS = [
+// Adding or removing staff accounts is exclusively the main admin's power —
+// kept out of the sidebar entirely for everyone else, including other
+// admins, rather than shown and then rejected.
+const MAIN_ADMIN_ONLY_NAV_ITEMS = [
   { to: '/admin/manage-admins', label: 'Manage Admin' },
   { to: '/admin/manage-moderators', label: 'Manage Moderator' },
 ]
@@ -25,7 +27,8 @@ const mobileLinkClass = ({ isActive }) =>
 
 export default function AdminLayout() {
   const { user, logout } = useAuth()
-  const navItems = user?.role === 'ADMIN' ? [...BASE_NAV_ITEMS, ...ADMIN_ONLY_NAV_ITEMS] : BASE_NAV_ITEMS
+  const isMainAdmin = user?.email?.toLowerCase() === MAIN_ADMIN_EMAIL
+  const navItems = isMainAdmin ? [...BASE_NAV_ITEMS, ...MAIN_ADMIN_ONLY_NAV_ITEMS] : BASE_NAV_ITEMS
 
   return (
     <div className="flex min-h-screen bg-canvas">
