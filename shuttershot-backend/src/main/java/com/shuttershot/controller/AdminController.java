@@ -1,6 +1,8 @@
 package com.shuttershot.controller;
 
+import com.shuttershot.dto.AccountHistoryResponse;
 import com.shuttershot.dto.AdminUserResponse;
+import com.shuttershot.dto.ConfirmPasswordRequest;
 import com.shuttershot.dto.CreateStaffAccountRequest;
 import com.shuttershot.dto.PortfolioImageResponse;
 import com.shuttershot.dto.ReviewResponse;
@@ -77,13 +79,23 @@ public class AdminController {
         return ResponseEntity.ok(adminUserService.verify(id));
     }
 
-    // Permanently removes the account and everything it owns — see
-    // AdminUserService.remove for what that cascade covers.
+    // Permanently removes the account and everything it owns, and blocks
+    // this email from ever registering again — see AdminUserService.ban.
     @PutMapping("/users/{id}/ban")
     public ResponseEntity<Void> banUser(
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
-        adminUserService.remove(id, principal.getId());
+        adminUserService.ban(id, principal.getId());
+        return ResponseEntity.noContent().build();
+    }
+
+    // Same permanent deletion, but leaves the email free to register a new
+    // account afterward — see AdminUserService.justDelete.
+    @DeleteMapping("/users/{id}")
+    public ResponseEntity<Void> justDeleteUser(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        adminUserService.justDelete(id, principal.getId());
         return ResponseEntity.noContent().build();
     }
 
@@ -111,6 +123,54 @@ public class AdminController {
             @PathVariable Long id,
             @AuthenticationPrincipal UserPrincipal principal) {
         adminUserService.removeStaff(id, principal.getId());
+        return ResponseEntity.noContent().build();
+    }
+
+    // Photographers Profile History — main-admin-only, per AdminUserService.
+    @GetMapping("/photographer-history")
+    public ResponseEntity<List<AccountHistoryResponse>> listPhotographerHistory(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(adminUserService.listPhotographerHistory(principal.getId()));
+    }
+
+    @DeleteMapping("/photographer-history/{id}")
+    public ResponseEntity<Void> removePhotographerHistory(
+            @PathVariable Long id,
+            @Valid @RequestBody ConfirmPasswordRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        adminUserService.removePhotographerHistory(id, principal.getId(), request.getPassword());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/photographer-history")
+    public ResponseEntity<Void> removeAllPhotographerHistory(
+            @Valid @RequestBody ConfirmPasswordRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        adminUserService.removeAllPhotographerHistory(principal.getId(), request.getPassword());
+        return ResponseEntity.noContent().build();
+    }
+
+    // User Profile History — same shape, but for CUSTOMER accounts.
+    @GetMapping("/user-history")
+    public ResponseEntity<List<AccountHistoryResponse>> listUserHistory(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(adminUserService.listUserHistory(principal.getId()));
+    }
+
+    @DeleteMapping("/user-history/{id}")
+    public ResponseEntity<Void> removeUserHistory(
+            @PathVariable Long id,
+            @Valid @RequestBody ConfirmPasswordRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        adminUserService.removeUserHistory(id, principal.getId(), request.getPassword());
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/user-history")
+    public ResponseEntity<Void> removeAllUserHistory(
+            @Valid @RequestBody ConfirmPasswordRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        adminUserService.removeAllUserHistory(principal.getId(), request.getPassword());
         return ResponseEntity.noContent().build();
     }
 }

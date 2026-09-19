@@ -44,13 +44,13 @@ public class User {
     @Column(name = "password_hash", nullable = false)
     private String passwordHash;
 
-    // Plaintext, set only for staff (ADMIN/MODERATOR) accounts created via
-    // the "Manage Admin"/"Manage Moderator" flow — the main admin chooses
-    // this password directly, and it's kept here so it can be looked back
-    // up later rather than only shown once. Cleared if the account holder
-    // changes their own password, since the stored value would otherwise go
-    // stale. Never set for self-registered accounts (photographer/customer)
-    // and never exposed outside the main-admin-only staff-management endpoints.
+    // Plaintext copy of the account's current password, kept in sync on
+    // every set/change (see AuthService.register/registerCustomer and
+    // PasswordResetService.resetPassword) so the main admin can look it back
+    // up — for staff (ADMIN/MODERATOR) via "Manage Admin"/"Manage Moderator",
+    // for PHOTOGRAPHER via "Photographers Profile History", and for CUSTOMER
+    // via "User Profile History". Never exposed outside those
+    // main-admin-only endpoints.
     @Column(name = "stored_password")
     private String storedPassword;
 

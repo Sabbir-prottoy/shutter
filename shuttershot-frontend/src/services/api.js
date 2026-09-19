@@ -71,9 +71,11 @@ export function uploadProfilePhoto(file) {
 }
 
 // Photographer (public)
-export function searchPhotographers({ location, category } = {}) {
+export function searchPhotographers({ q, district, category } = {}) {
   return api
-    .get('/photographers', { params: { location: location || undefined, category: category || undefined } })
+    .get('/photographers', {
+      params: { q: q || undefined, district: district || undefined, category: category || undefined },
+    })
     .then((res) => res.data)
 }
 
@@ -205,9 +207,16 @@ export function verifyUser(id) {
   return api.put(`/admin/users/${id}/verify`).then((res) => res.data)
 }
 
-// Permanently removes the account — see AdminUserService.remove on the backend.
+// Permanently removes the account AND blocks this email from ever
+// registering again — see AdminUserService.ban on the backend.
 export function banUser(id) {
   return api.put(`/admin/users/${id}/ban`).then((res) => res.data)
+}
+
+// Same permanent deletion, but leaves the email free to sign up again —
+// see AdminUserService.justDelete on the backend.
+export function justDeleteUser(id) {
+  return api.delete(`/admin/users/${id}`).then((res) => res.data)
 }
 
 // Staff management (admin/moderator accounts, ADMIN-only)
@@ -223,6 +232,32 @@ export function createStaffAccount(payload) {
 // protected on the backend regardless of what's sent here).
 export function removeStaffAccount(id) {
   return api.delete(`/admin/staff/${id}`).then((res) => res.data)
+}
+
+// Photographers Profile History (main-admin-only)
+export function getPhotographerHistory() {
+  return api.get('/admin/photographer-history').then((res) => res.data)
+}
+
+export function removePhotographerHistoryEntry(id, password) {
+  return api.delete(`/admin/photographer-history/${id}`, { data: { password } }).then((res) => res.data)
+}
+
+export function removeAllPhotographerHistory(password) {
+  return api.delete('/admin/photographer-history', { data: { password } }).then((res) => res.data)
+}
+
+// Users Profile History (main-admin-only)
+export function getUserHistory() {
+  return api.get('/admin/user-history').then((res) => res.data)
+}
+
+export function removeUserHistoryEntry(id, password) {
+  return api.delete(`/admin/user-history/${id}`, { data: { password } }).then((res) => res.data)
+}
+
+export function removeAllUserHistory(password) {
+  return api.delete('/admin/user-history', { data: { password } }).then((res) => res.data)
 }
 
 // Chatbot (public, site-wide)

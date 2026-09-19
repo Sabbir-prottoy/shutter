@@ -43,9 +43,10 @@ public class PhotographerController {
 
     @GetMapping
     public ResponseEntity<List<PhotographerSummaryResponse>> search(
-            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String district,
             @RequestParam(required = false) String category) {
-        return ResponseEntity.ok(photographerService.search(location, category));
+        return ResponseEntity.ok(photographerService.search(q, district, category));
     }
 
     @GetMapping("/me")

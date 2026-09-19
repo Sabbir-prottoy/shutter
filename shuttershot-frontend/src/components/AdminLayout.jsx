@@ -15,6 +15,8 @@ const BASE_NAV_ITEMS = [
 const MAIN_ADMIN_ONLY_NAV_ITEMS = [
   { to: '/admin/manage-admins', label: 'Manage Admin' },
   { to: '/admin/manage-moderators', label: 'Manage Moderator' },
+  { to: '/admin/photographer-history', label: 'Photographers Profile History' },
+  { to: '/admin/user-history', label: 'Users Profile History' },
 ]
 
 const desktopLinkClass = ({ isActive }) =>

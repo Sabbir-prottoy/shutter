@@ -93,7 +93,7 @@ public class ChatbotService {
                 .append("page and the \"Book\" button there.\n\n")
                 .append("Current photographers on ShutterShot:\n");
 
-        List<PhotographerSummaryResponse> photographers = photographerService.search(null, null);
+        List<PhotographerSummaryResponse> photographers = photographerService.search(null, null, null);
         if (photographers.isEmpty()) {
             sb.append("(No photographers are listed on the site yet.)\n");
             return sb.toString();

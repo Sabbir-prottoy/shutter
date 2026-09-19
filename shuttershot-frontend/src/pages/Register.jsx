@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { useAuth } from '../context/AuthContext'
+import { BANGLADESH_DISTRICTS } from '../constants'
 import { registerRequest } from '../services/api'
 
 export default function Register() {
@@ -28,7 +29,7 @@ export default function Register() {
         email,
         password,
         phone: phone || undefined,
-        location: location || undefined,
+        location,
       })
       login(result)
       navigate('/dashboard', { replace: true })
@@ -83,13 +84,22 @@ export default function Register() {
             placeholder="Phone number (optional)"
             className="w-full rounded-card border border-border bg-surface px-4 py-3 text-ink placeholder:text-ink-muted focus:border-accent"
           />
-          <input
-            type="text"
+          <select
+            required
             value={location}
             onChange={(event) => setLocation(event.target.value)}
-            placeholder="Location (optional)"
-            className="w-full rounded-card border border-border bg-surface px-4 py-3 text-ink placeholder:text-ink-muted focus:border-accent"
-          />
+            aria-label="District"
+            className="w-full rounded-card border border-border bg-surface px-4 py-3 text-ink focus:border-accent"
+          >
+            <option value="" disabled>
+              Select your district
+            </option>
+            {BANGLADESH_DISTRICTS.map((district) => (
+              <option key={district} value={district}>
+                {district}
+              </option>
+            ))}
+          </select>
 
           {error && <p className="text-sm text-booked">{error}</p>}
 

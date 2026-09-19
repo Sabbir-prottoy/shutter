@@ -14,6 +14,15 @@ import ReviewModeration from './pages/AdminPanel/ReviewModeration'
 import PhotoModeration from './pages/AdminPanel/PhotoModeration'
 import UserManagement from './pages/AdminPanel/UserManagement'
 import StaffManagement from './pages/AdminPanel/StaffManagement'
+import AccountHistory from './pages/AdminPanel/AccountHistory'
+import {
+  getPhotographerHistory,
+  removeAllPhotographerHistory,
+  removePhotographerHistoryEntry,
+  getUserHistory,
+  removeAllUserHistory,
+  removeUserHistoryEntry,
+} from './services/api'
 import FAQ from './pages/FAQ'
 import Login from './pages/Login'
 import Register from './pages/Register'
@@ -73,6 +82,32 @@ export default function App() {
             <Route
               path="/admin/manage-moderators"
               element={<StaffManagement role="MODERATOR" title="Manage Moderator" roleLabel="moderator" />}
+            />
+            <Route
+              path="/admin/photographer-history"
+              element={
+                <AccountHistory
+                  title="Photographers Profile History"
+                  entityLabel="photographer"
+                  pluralLabel="photographers"
+                  getHistory={getPhotographerHistory}
+                  removeEntry={removePhotographerHistoryEntry}
+                  removeAll={removeAllPhotographerHistory}
+                />
+              }
+            />
+            <Route
+              path="/admin/user-history"
+              element={
+                <AccountHistory
+                  title="Users Profile History"
+                  entityLabel="user"
+                  pluralLabel="users"
+                  getHistory={getUserHistory}
+                  removeEntry={removeUserHistoryEntry}
+                  removeAll={removeAllUserHistory}
+                />
+              }
             />
           </Route>
         </Route>

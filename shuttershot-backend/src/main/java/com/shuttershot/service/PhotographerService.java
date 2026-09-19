@@ -10,6 +10,7 @@ import com.shuttershot.model.PhotographerProfile;
 import com.shuttershot.model.Role;
 import com.shuttershot.model.User;
 import com.shuttershot.repository.PhotographerProfileRepository;
+import jakarta.persistence.criteria.Predicate;
 import com.shuttershot.repository.UserRepository;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
@@ -32,7 +33,7 @@ public class PhotographerService {
     private final FileStorageService fileStorageService;
 
     @Transactional(readOnly = true)
-    public List<PhotographerSummaryResponse> search(String location, String category) {
+    public List<PhotographerSummaryResponse> search(String q, String district, String category) {
         // Only ever surface accounts that are actually photographers — an
         // account whose role was changed after its profile row was created
         // (e.g. promoted to ADMIN) should stop appearing publicly, and a
@@ -40,9 +41,24 @@ public class PhotographerService {
         Specification<PhotographerProfile> spec = Specification
                 .where((root, query, cb) -> cb.equal(root.get("user").get("role"), Role.PHOTOGRAPHER));
 
-        if (StringUtils.hasText(location)) {
-            String pattern = "%" + location.toLowerCase() + "%";
-            spec = spec.and((root, query, cb) -> cb.like(cb.lower(root.get("baseLocation")), pattern));
+        // Free-text lookup by name, email, or phone — the response itself
+        // never includes email/phone, so this is a "search by" key rather
+        // than something that leaks contact info to whoever searches by it.
+        if (StringUtils.hasText(q)) {
+            String pattern = "%" + q.toLowerCase() + "%";
+            spec = spec.and((root, query, cb) -> {
+                Join<PhotographerProfile, User> userJoin = root.join("user", JoinType.INNER);
+                Predicate nameMatch = cb.like(cb.lower(userJoin.get("name")), pattern);
+                Predicate emailMatch = cb.like(cb.lower(userJoin.get("email")), pattern);
+                Predicate phoneMatch = cb.like(cb.lower(userJoin.get("phone")), pattern);
+                return cb.or(nameMatch, emailMatch, phoneMatch);
+            });
+        }
+
+        // Exact match — district is a fixed, controlled value (see
+        // BangladeshDistricts), not free text, so no partial matching needed.
+        if (StringUtils.hasText(district)) {
+            spec = spec.and((root, query, cb) -> cb.equal(cb.lower(root.get("baseLocation")), district.toLowerCase()));
         }
 
         if (StringUtils.hasText(category)) {

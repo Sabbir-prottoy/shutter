@@ -8,7 +8,8 @@ import { searchPhotographers } from '../services/api'
 
 export default function SearchResults() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const location = searchParams.get('location') || ''
+  const q = searchParams.get('q') || ''
+  const district = searchParams.get('district') || ''
   const category = searchParams.get('category') || ''
 
   const [photographers, setPhotographers] = useState([])
@@ -18,7 +19,7 @@ export default function SearchResults() {
     let cancelled = false
     setStatus('loading')
 
-    searchPhotographers({ location, category })
+    searchPhotographers({ q, district, category })
       .then((data) => {
         if (!cancelled) {
           setPhotographers(data)
@@ -32,16 +33,17 @@ export default function SearchResults() {
     return () => {
       cancelled = true
     }
-  }, [location, category])
+  }, [q, district, category])
 
-  function handleSearch({ location: nextLocation, category: nextCategory }) {
+  function handleSearch({ q: nextQ, district: nextDistrict, category: nextCategory }) {
     const params = new URLSearchParams()
-    if (nextLocation) params.set('location', nextLocation)
+    if (nextQ) params.set('q', nextQ)
+    if (nextDistrict) params.set('district', nextDistrict)
     if (nextCategory) params.set('category', nextCategory)
     setSearchParams(params)
   }
 
-  const hasFilters = Boolean(location || category)
+  const hasFilters = Boolean(q || district || category)
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
@@ -53,7 +55,8 @@ export default function SearchResults() {
         </h1>
 
         <SearchBar
-          initialLocation={location}
+          initialQuery={q}
+          initialDistrict={district}
           initialCategory={category}
           onSearch={handleSearch}
           className="mt-6"
@@ -76,7 +79,7 @@ export default function SearchResults() {
 
         {status === 'ready' && photographers.length === 0 && (
           <p className="mt-8 text-ink-muted">
-            No photographers found — try a different location or category.
+            No photographers found — try a different search term, district, or category.
           </p>
         )}
 

