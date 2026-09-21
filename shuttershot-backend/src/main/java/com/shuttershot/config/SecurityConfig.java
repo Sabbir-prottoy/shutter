@@ -56,13 +56,29 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/otp/**", "/uploads/**", "/api/chatbot/**").permitAll()
+                        // SSLCommerz redirects the customer's own browser here with a plain
+                        // form POST — no JWT is available, and none is needed: the handler
+                        // re-validates the payment against SSLCommerz's own API before it
+                        // trusts anything from this request.
+                        .requestMatchers("/api/blue-badge/payment/**").permitAll()
                         // Must precede the broader GET /api/photographers/** permitAll rule below —
                         // Spring Security's matchers are evaluated in order, first match wins, and
                         // /me resolves from the JWT principal so it can't be public.
                         .requestMatchers(HttpMethod.GET, "/api/photographers/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/photographers/**", "/api/reviews").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/bookings", "/api/bookings/*/confirm-otp", "/api/reviews")
+                        .requestMatchers(HttpMethod.POST, "/api/bookings", "/api/bookings/*/confirm-otp",
+                                "/api/bookings/*/deposit/initiate", "/api/bookings/*/verification-method",
+                                "/api/bookings/verify-qr/*", "/api/reviews")
                         .permitAll()
+                        // SSLCommerz redirects the customer's own browser here with a plain
+                        // form POST — no JWT is available, and none is needed: the handler
+                        // re-validates the payment against SSLCommerz's own API before it
+                        // trusts anything from this request.
+                        .requestMatchers("/api/bookings/payment/**").permitAll()
+                        // Must precede the broader GET /api/bookings/* permitAll rule below,
+                        // same first-match-wins reasoning as /api/photographers/me above.
+                        .requestMatchers(HttpMethod.GET, "/api/bookings/mine").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/bookings/*").permitAll()
                         // Managing admin/moderator accounts is ADMIN-only; must precede
                         // the broader /api/admin/** rule below for the same first-match-wins reason.
                         .requestMatchers("/api/admin/staff", "/api/admin/staff/**").hasRole("ADMIN")

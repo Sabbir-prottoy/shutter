@@ -52,6 +52,16 @@ public class FileStorageService {
         }
     }
 
+    public byte[] loadBytes(String imageUrl) {
+        String filename = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
+        Path targetPath = Paths.get(uploadDir).toAbsolutePath().normalize().resolve(filename);
+        try {
+            return Files.readAllBytes(targetPath);
+        } catch (IOException e) {
+            throw new FileStorageException("Failed to read stored file", e);
+        }
+    }
+
     public void delete(String imageUrl) {
         if (imageUrl == null || !imageUrl.contains("/uploads/")) {
             return;

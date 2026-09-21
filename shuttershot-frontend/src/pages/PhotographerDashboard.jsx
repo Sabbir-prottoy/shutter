@@ -12,7 +12,7 @@ const EARNED_STATUSES = new Set(['CONFIRMED', 'COMPLETED'])
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
-  currency: 'USD',
+  currency: 'BDT',
   maximumFractionDigits: 0,
 })
 

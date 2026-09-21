@@ -62,3 +62,16 @@ gemini:
   # https://aistudio.google.com/apikey.
   api-key: ${GEMINI_API_KEY:}
   model: ${GEMINI_MODEL:gemini-3.6-flash}
+
+aiornot:
+  # AI-image detection for admin photo moderation — https://aiornot.com.
+  # Server-side only, never sent to the frontend.
+  api-key: ${AIORNOT_API_KEY:}
+
+sslcommerz:
+  # Sandbox store credentials from https://developer.sslcommerz.com — server-side
+  # only, never sent to the frontend. sandbox=false + a live store-id/password
+  # switches to the production gateway host with no other code change needed.
+  store-id: ${SSLCOMMERZ_STORE_ID:}
+  store-password: ${SSLCOMMERZ_STORE_PASSWORD:}
+  sandbox: ${SSLCOMMERZ_SANDBOX:true}

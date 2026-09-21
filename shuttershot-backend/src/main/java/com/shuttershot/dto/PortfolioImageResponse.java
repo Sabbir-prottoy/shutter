@@ -25,4 +25,10 @@ public class PortfolioImageResponse {
     private LocalDateTime uploadedAt;
     private VerificationStatus verificationStatus;
     private String flagReason;
+
+    // Null until an admin runs the AI check (PortfolioService.checkForAi).
+    private String aiCheckVerdict;
+    private Double aiCheckConfidence;
+    private String aiCheckGenerator;
+    private LocalDateTime aiCheckedAt;
 }

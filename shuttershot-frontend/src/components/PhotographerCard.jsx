@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import BlueCheckIcon from './BlueCheckIcon'
 
 export default function PhotographerCard({ photographer }) {
   const {
@@ -10,6 +11,7 @@ export default function PhotographerCard({ photographer }) {
     ratingAvg,
     totalReviews,
     verified,
+    hasBlueBadge,
   } = photographer
 
   const imageSrc = profilePhotoUrl || `https://picsum.photos/seed/shuttershot-${id}/600/450`
@@ -30,7 +32,10 @@ export default function PhotographerCard({ photographer }) {
 
       <div className="p-5">
         <div className="flex items-start justify-between gap-2">
-          <h3 className="font-sans text-xl font-semibold text-ink">{name}</h3>
+          <h3 className="flex items-center gap-1.5 font-sans text-xl font-semibold text-ink">
+            {name}
+            {hasBlueBadge && <BlueCheckIcon className="h-4 w-4 shrink-0" />}
+          </h3>
           {verified && (
             <span className="shrink-0 rounded-full bg-free/20 px-2 py-0.5 text-xs font-medium text-free">
               Verified

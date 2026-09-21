@@ -13,6 +13,7 @@ import com.shuttershot.model.Role;
 import com.shuttershot.model.User;
 import com.shuttershot.repository.AvailabilityRepository;
 import com.shuttershot.repository.BannedEmailRepository;
+import com.shuttershot.repository.BlueBadgeRepository;
 import com.shuttershot.repository.BookingRepository;
 import com.shuttershot.repository.PackageRepository;
 import com.shuttershot.repository.PasswordResetTokenRepository;
@@ -27,7 +28,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.MailException;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,13 +40,11 @@ import java.util.List;
 public class AdminUserService {
 
     private static final Logger log = LoggerFactory.getLogger(AdminUserService.class);
-    // The original, pre-existing admin account — the only one allowed to
-    // manage staff accounts, and never itself removable or password-exposed
-    // through this feature.
-    private static final String MAIN_ADMIN_EMAIL = "admin@shuttershot.com";
 
     private final UserRepository userRepository;
+    private final MainAdminGuard mainAdminGuard;
     private final BannedEmailRepository bannedEmailRepository;
+    private final BlueBadgeRepository blueBadgeRepository;
     private final PhotographerProfileRepository photographerProfileRepository;
     private final BookingRepository bookingRepository;
     private final ReviewRepository reviewRepository;
@@ -71,7 +69,7 @@ public class AdminUserService {
     // privilege — every method here starts by checking that.
     @Transactional(readOnly = true)
     public List<StaffAccountResponse> listStaff(Role role, Long actingAdminId) {
-        requireMainAdmin(actingAdminId, "view staff accounts");
+        mainAdminGuard.require(actingAdminId, "view staff accounts");
         if (role != Role.ADMIN && role != Role.MODERATOR) {
             throw new InvalidRequestException("Staff accounts must be either ADMIN or MODERATOR");
         }
@@ -125,13 +123,13 @@ public class AdminUserService {
     // may call this, and the main admin's own account can never be the target.
     @Transactional
     public void removeStaff(Long userId, Long actingAdminId) {
-        requireMainAdmin(actingAdminId, "remove staff accounts");
+        mainAdminGuard.require(actingAdminId, "remove staff accounts");
 
         User user = findById(userId);
         if (user.getRole() != Role.ADMIN && user.getRole() != Role.MODERATOR) {
             throw new InvalidRequestException("This account is not a staff account");
         }
-        if (MAIN_ADMIN_EMAIL.equalsIgnoreCase(user.getEmail())) {
+        if (mainAdminGuard.isMainAdmin(user)) {
             throw new InvalidRequestException("The main admin account can't be removed");
         }
 
@@ -156,7 +154,7 @@ public class AdminUserService {
     }
 
     private List<AccountHistoryResponse> listAccountHistory(Role role, Long actingAdminId, String entityLabel) {
-        requireMainAdmin(actingAdminId, "view " + entityLabel + " history");
+        mainAdminGuard.require(actingAdminId, "view " + entityLabel + " history");
         return userRepository.findByRole(role).stream()
                 .sorted(Comparator.comparing(User::getName, String.CASE_INSENSITIVE_ORDER))
                 .map(this::toAccountHistoryResponse)
@@ -178,7 +176,7 @@ public class AdminUserService {
 
     private void removeAccountHistory(
             Long userId, Role role, Long actingAdminId, String confirmPassword, String entityLabel) {
-        requireMainAdmin(actingAdminId, "remove " + entityLabel + " history");
+        mainAdminGuard.require(actingAdminId, "remove " + entityLabel + " history");
         verifyMainAdminPassword(actingAdminId, confirmPassword);
 
         User user = findById(userId);
@@ -201,7 +199,7 @@ public class AdminUserService {
     }
 
     private void removeAllAccountHistory(Role role, Long actingAdminId, String confirmPassword, String entityLabel) {
-        requireMainAdmin(actingAdminId, "remove " + entityLabel + " history");
+        mainAdminGuard.require(actingAdminId, "remove " + entityLabel + " history");
         verifyMainAdminPassword(actingAdminId, confirmPassword);
 
         userRepository.findByRole(role).forEach(this::deleteUserCascade);
@@ -220,6 +218,7 @@ public class AdminUserService {
             reviewRepository.deleteAll(reviewRepository.findByPhotographerId(profile.getId()));
             bookingRepository.deleteAll(bookingRepository.findByPhotographerId(profile.getId()));
             availabilityRepository.deleteAll(availabilityRepository.findByPhotographerId(profile.getId()));
+            blueBadgeRepository.findByPhotographerId(profile.getId()).ifPresent(blueBadgeRepository::delete);
 
             List<PortfolioImage> images = portfolioImageRepository.findByPhotographerId(profile.getId());
             images.forEach(image -> fileStorageService.delete(image.getImageUrl()));
@@ -238,7 +237,7 @@ public class AdminUserService {
     // whatever they chose for it — not auto-generated.
     @Transactional
     public StaffAccountResponse createStaff(CreateStaffAccountRequest request, Long actingAdminId) {
-        requireMainAdmin(actingAdminId, "add staff accounts");
+        mainAdminGuard.require(actingAdminId, "add staff accounts");
 
         if (request.getRole() != Role.ADMIN && request.getRole() != Role.MODERATOR) {
             throw new InvalidRequestException("Staff accounts must be either ADMIN or MODERATOR");
@@ -260,13 +259,6 @@ public class AdminUserService {
         sendCredentialsEmail(user, request.getPassword());
 
         return toStaffResponse(user);
-    }
-
-    private void requireMainAdmin(Long actingAdminId, String action) {
-        User actingUser = findById(actingAdminId);
-        if (!MAIN_ADMIN_EMAIL.equalsIgnoreCase(actingUser.getEmail())) {
-            throw new AccessDeniedException("Only the main admin can " + action);
-        }
     }
 
     private void verifyMainAdminPassword(Long actingAdminId, String confirmPassword) {
@@ -318,7 +310,7 @@ public class AdminUserService {
     }
 
     private StaffAccountResponse toStaffResponse(User user) {
-        boolean isMainAdmin = MAIN_ADMIN_EMAIL.equalsIgnoreCase(user.getEmail());
+        boolean isMainAdmin = mainAdminGuard.isMainAdmin(user);
         return StaffAccountResponse.builder()
                 .id(user.getId())
                 .role(user.getRole())

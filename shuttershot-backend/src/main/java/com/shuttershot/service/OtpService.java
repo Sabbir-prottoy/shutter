@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.LinkedMultiValueMap;
@@ -23,10 +25,15 @@ import java.util.Map;
  * SMS delivery goes through Textbelt (textbelt.com), which does attempt a
  * real send — but every free/near-free gateway evaluated for this project
  * either can't reach Bangladeshi carriers (Textbelt blocks BD outright) or
- * has no send capability at all. Rather than block booking entirely on
- * unresolved SMS delivery, sendOtp() also returns the generated code so the
- * caller can surface it directly in the UI as a fallback — a deliberate,
- * temporary trade-off (no real secrecy) to keep the booking flow usable.
+ * has no send capability at all, so sendOtp() also returns the generated
+ * code as a fallback the caller can show directly in the UI (no real secrecy,
+ * a deliberate trade-off to keep the phone-OTP path usable).
+ *
+ * Email delivery (sendOtpEmail) is different: it goes through the app's own
+ * configured SMTP account (MAIL_USERNAME/MAIL_PASSWORD, same one used for
+ * staff credential emails), which is real end-to-end, so the code is never
+ * echoed back — a send failure is thrown instead, for the caller to turn
+ * into a clear "couldn't email you a code" error.
  */
 @Service
 @RequiredArgsConstructor
@@ -39,12 +46,32 @@ public class OtpService {
     private static final RestClient TEXTBELT_CLIENT = RestClient.create("https://textbelt.com");
 
     private final OtpVerificationRepository otpVerificationRepository;
+    private final JavaMailSender mailSender;
 
     @Value("${textbelt.api-key}")
     private String textbeltApiKey;
 
+    @Value("${app.mail-from}")
+    private String mailFrom;
+
     @Transactional
     public String sendOtp(String contact) {
+        String code = storeCode(contact);
+        sendSms(contact, code);
+        return code;
+    }
+
+    // Same code storage/expiry as sendOtp above — delivered by email instead of
+    // SMS. Kept as a separate method (rather than auto-detecting contact shape)
+    // because the caller already knows which channel the customer picked.
+    @Transactional
+    public String sendOtpEmail(String email) {
+        String code = storeCode(email);
+        sendEmail(email, code);
+        return code;
+    }
+
+    private String storeCode(String contact) {
         String code = generateCode();
 
         OtpVerification otp = OtpVerification.builder()
@@ -55,7 +82,6 @@ public class OtpService {
                 .build();
         otpVerificationRepository.save(otp);
 
-        sendSms(contact, code);
         return code;
     }
 
@@ -105,6 +131,21 @@ public class OtpService {
         } catch (RestClientException ex) {
             log.warn("Textbelt request failed for {} — code: {}", phone, code, ex);
         }
+    }
+
+    // Lets MailException propagate — unlike sendSms, there's no on-screen
+    // fallback for email codes to quietly fall back to, so the caller needs
+    // to know delivery actually failed.
+    private void sendEmail(String email, String code) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setFrom(mailFrom);
+        message.setTo(email);
+        message.setSubject("Your ShutterShot verification code");
+        message.setText(
+                "Your ShutterShot verification code is " + code
+                        + ". It expires in " + EXPIRY_MINUTES + " minutes."
+        );
+        mailSender.send(message);
     }
 
     /**

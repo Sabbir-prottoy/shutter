@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { askChatbot } from '../services/api'
+import { triggerClickBurst } from './ClickBurstLayer'
 
 const GREETING = "Hi! I'm the ShutterShot Assistant. Ask me about photographers, packages, pricing, or date availability."
 
@@ -19,6 +20,17 @@ export default function ChatWidget() {
       listRef.current.scrollTop = listRef.current.scrollHeight
     }
   }, [messages, open])
+
+  // Lets the navbar's "Chat with AI" link open this widget from anywhere on
+  // the site — it's mounted once at the app root, not inside the navbar, so
+  // there's no direct parent/child relationship to pass a handler through.
+  useEffect(() => {
+    function handleOpenRequest() {
+      setOpen(true)
+    }
+    window.addEventListener('open-chat-widget', handleOpenRequest)
+    return () => window.removeEventListener('open-chat-widget', handleOpenRequest)
+  }, [])
 
   async function handleSend(event) {
     event.preventDefault()
@@ -114,7 +126,10 @@ export default function ChatWidget() {
 
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={(event) => {
+          triggerClickBurst(event.currentTarget)
+          setOpen((v) => !v)
+        }}
         aria-label={open ? 'Close chat assistant' : 'Open chat assistant'}
         className="ml-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent-gradient text-white shadow-hover transition-transform duration-200 hover:scale-105 active:animate-nav-bounce"
       >

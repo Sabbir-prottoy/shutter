@@ -49,6 +49,14 @@
   /* Idle wander for the 3D camera badge, so it's always moving a little
      even before the cursor touches it — cursor tilt then layers on top. */
   --animate-camera-drift: camera-drift 9s ease-in-out infinite;
+
+  /* Click-burst effect (see ClickBurstLayer) — a ring plus scattered sparks
+     that expand outward from a click point and fade, once, then unmount. */
+  --animate-burst-ring: burst-ring 0.75s ease-out forwards;
+  --animate-burst-spark: burst-spark 0.75s ease-out forwards;
+
+  /* Twinkling stars in the Entertainment page's hero illustration. */
+  --animate-twinkle: twinkle 2.4s ease-in-out infinite;
 }
 
 @keyframes camera-drift {
@@ -108,6 +116,21 @@
 @keyframes nav-glow {
   0% { box-shadow: 0 0 0 0 rgba(193, 90, 58, 0.55); }
   100% { box-shadow: 0 0 0 10px rgba(193, 90, 58, 0); }
+}
+
+@keyframes burst-ring {
+  0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0.65; }
+  100% { transform: translate(-50%, -50%) scale(9); opacity: 0; }
+}
+
+@keyframes burst-spark {
+  0% { transform: translate(-50%, -50%) translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) translate(var(--burst-dx), var(--burst-dy)) scale(0.2); opacity: 0; }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.35; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.15); }
 }
 
 :root {

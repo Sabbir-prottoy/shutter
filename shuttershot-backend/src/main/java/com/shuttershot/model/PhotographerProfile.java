@@ -16,6 +16,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.ColumnDefault;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -59,4 +60,12 @@ public class PhotographerProfile {
     @Column(name = "total_reviews")
     @Builder.Default
     private Integer totalReviews = 0;
+
+    // Denormalized from BlueBadge.active (kept in sync by BlueBadgeService) so
+    // the public search/listing query — the hot path — can sort and filter on
+    // it directly without joining the badge table on every request.
+    @Column(name = "has_blue_badge", nullable = false)
+    @ColumnDefault("false")
+    @Builder.Default
+    private boolean hasBlueBadge = false;
 }

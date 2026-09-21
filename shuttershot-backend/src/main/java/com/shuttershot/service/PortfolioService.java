@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -25,6 +26,7 @@ public class PortfolioService {
     private final PhotographerProfileRepository photographerProfileRepository;
     private final ImageVerificationService imageVerificationService;
     private final FileStorageService fileStorageService;
+    private final AiImageDetectionService aiImageDetectionService;
 
     @Transactional(readOnly = true)
     public List<PortfolioImageResponse> listByPhotographer(Long photographerId) {
@@ -115,6 +117,25 @@ public class PortfolioService {
         return toResponse(image);
     }
 
+    // Admin-triggered, on demand — never run automatically on upload, since
+    // it's a paid external call (see AiImageDetectionService). Re-running it
+    // on an already-checked image simply overwrites the previous result.
+    @Transactional
+    public PortfolioImageResponse checkForAi(Long imageId) {
+        PortfolioImage image = findById(imageId);
+        byte[] imageBytes = fileStorageService.loadBytes(image.getImageUrl());
+        String filename = image.getImageUrl().substring(image.getImageUrl().lastIndexOf('/') + 1);
+
+        AiImageDetectionService.AiCheckResult result = aiImageDetectionService.check(imageBytes, filename);
+
+        image.setAiCheckVerdict(result.verdict());
+        image.setAiCheckConfidence(result.confidence());
+        image.setAiCheckGenerator(result.generator());
+        image.setAiCheckedAt(LocalDateTime.now());
+
+        return toResponse(image);
+    }
+
     @Transactional
     public void rejectByAdmin(Long imageId) {
         PortfolioImage image = findById(imageId);
@@ -146,6 +167,10 @@ public class PortfolioService {
                 .uploadedAt(image.getUploadedAt())
                 .verificationStatus(image.getVerificationStatus())
                 .flagReason(image.getFlagReason())
+                .aiCheckVerdict(image.getAiCheckVerdict())
+                .aiCheckConfidence(image.getAiCheckConfidence())
+                .aiCheckGenerator(image.getAiCheckGenerator())
+                .aiCheckedAt(image.getAiCheckedAt())
                 .build();
     }
 }

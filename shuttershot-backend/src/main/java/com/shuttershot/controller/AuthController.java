@@ -5,6 +5,8 @@ import com.shuttershot.dto.ForgotPasswordRequest;
 import com.shuttershot.dto.LoginRequest;
 import com.shuttershot.dto.RegisterRequest;
 import com.shuttershot.dto.ResetPasswordRequest;
+import com.shuttershot.dto.ResetTokenResponse;
+import com.shuttershot.dto.VerifyResetOtpRequest;
 import com.shuttershot.service.AuthService;
 import com.shuttershot.service.PasswordResetService;
 import jakarta.validation.Valid;
@@ -43,6 +45,12 @@ public class AuthController {
     public ResponseEntity<Void> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
         passwordResetService.requestReset(request.getEmail());
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/verify-reset-otp")
+    public ResponseEntity<ResetTokenResponse> verifyResetOtp(@Valid @RequestBody VerifyResetOtpRequest request) {
+        String token = passwordResetService.verifyResetOtp(request.getEmail(), request.getOtpCode());
+        return ResponseEntity.ok(ResetTokenResponse.builder().resetToken(token).build());
     }
 
     @PostMapping("/reset-password")

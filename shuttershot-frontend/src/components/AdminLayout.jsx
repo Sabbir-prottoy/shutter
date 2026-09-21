@@ -3,20 +3,24 @@ import { useAuth } from '../context/AuthContext'
 import { MAIN_ADMIN_EMAIL } from '../constants'
 import Footer from './Footer'
 
+// Overview is a read-only dashboard — kept at the top of the sidebar, but
+// still open to any ADMIN/MODERATOR like the other day-to-day tools below it.
 const BASE_NAV_ITEMS = [
+  { to: '/admin/overview', label: 'Overview' },
   { to: '/admin/reviews', label: 'Review Moderation' },
   { to: '/admin/photos', label: 'Photo Moderation' },
   { to: '/admin/users', label: 'User Management' },
 ]
 
-// Adding or removing staff accounts is exclusively the main admin's power —
-// kept out of the sidebar entirely for everyone else, including other
-// admins, rather than shown and then rejected.
+// Adding or removing staff accounts, and blue-badge pricing/holders, are
+// exclusively the main admin's power — kept out of the sidebar entirely for
+// everyone else, including other admins, rather than shown and then rejected.
 const MAIN_ADMIN_ONLY_NAV_ITEMS = [
   { to: '/admin/manage-admins', label: 'Manage Admin' },
   { to: '/admin/manage-moderators', label: 'Manage Moderator' },
   { to: '/admin/photographer-history', label: 'Photographers Profile History' },
   { to: '/admin/user-history', label: 'Users Profile History' },
+  { to: '/admin/blue-badge', label: 'Blue Badge Management' },
 ]
 
 const desktopLinkClass = ({ isActive }) =>

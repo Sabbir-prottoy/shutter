@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { to: '/dashboard/packages', label: 'Packages' },
   { to: '/dashboard/bookings', label: 'Bookings' },
   { to: '/dashboard/profile', label: 'Profile Settings' },
+  { to: '/dashboard/verified-badge', label: 'Verified Badge' },
 ]
 
 const desktopLinkClass = ({ isActive }) =>

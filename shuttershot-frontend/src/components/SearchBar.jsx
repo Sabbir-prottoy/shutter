@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BANGLADESH_DISTRICTS } from '../constants'
+import { triggerClickBurst } from './ClickBurstLayer'
 
 const CATEGORIES = ['wedding', 'portrait', 'event', 'landscape']
 
@@ -73,6 +74,7 @@ export default function SearchBar({
 
       <button
         type="submit"
+        onClick={(event) => triggerClickBurst(event.currentTarget)}
         className="rounded-card bg-accent-gradient px-6 py-3 font-medium text-white shadow-card transition-shadow hover:shadow-hover"
       >
         Search

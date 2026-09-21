@@ -24,4 +24,5 @@ public class PhotographerSummaryResponse {
     private Double ratingAvg;
     private Integer totalReviews;
     private boolean verified;
+    private boolean hasBlueBadge;
 }

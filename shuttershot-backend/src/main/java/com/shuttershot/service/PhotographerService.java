@@ -37,9 +37,13 @@ public class PhotographerService {
         // Only ever surface accounts that are actually photographers — an
         // account whose role was changed after its profile row was created
         // (e.g. promoted to ADMIN) should stop appearing publicly, and a
-        // customer account should never appear here at all.
+        // customer account should never appear here at all. Blue badge
+        // holders sort first, per the whole point of buying the badge.
         Specification<PhotographerProfile> spec = Specification
-                .where((root, query, cb) -> cb.equal(root.get("user").get("role"), Role.PHOTOGRAPHER));
+                .where((root, query, cb) -> {
+                    query.orderBy(cb.desc(root.get("hasBlueBadge")));
+                    return cb.equal(root.get("user").get("role"), Role.PHOTOGRAPHER);
+                });
 
         // Free-text lookup by name, email, or phone — the response itself
         // never includes email/phone, so this is a "search by" key rather
@@ -168,7 +172,8 @@ public class PhotographerService {
                 .yearsExperience(profile.getYearsExperience())
                 .ratingAvg(profile.getRatingAvg())
                 .totalReviews(profile.getTotalReviews())
-                .verified(user.isVerified())
+                .verified(isVerified(user, profile))
+                .hasBlueBadge(profile.isHasBlueBadge())
                 .build();
     }
 
@@ -184,7 +189,8 @@ public class PhotographerService {
                 .yearsExperience(profile.getYearsExperience())
                 .ratingAvg(profile.getRatingAvg())
                 .totalReviews(profile.getTotalReviews())
-                .verified(user.isVerified())
+                .verified(isVerified(user, profile))
+                .hasBlueBadge(profile.isHasBlueBadge())
                 .build();
     }
 
@@ -200,10 +206,18 @@ public class PhotographerService {
                 .yearsExperience(profile.getYearsExperience())
                 .ratingAvg(profile.getRatingAvg())
                 .totalReviews(profile.getTotalReviews())
-                .verified(user.isVerified())
+                .verified(isVerified(user, profile))
                 .phone(user.getPhone())
                 .location(user.getLocation())
                 .email(user.getEmail())
                 .build();
+    }
+
+    // A blue badge is itself a paid verification — a photographer who holds one
+    // shows as verified automatically, with no separate admin action needed.
+    // Admins can still manually verify photographers without a badge, and that
+    // still works the same way it always has (AdminUserService.verify).
+    private boolean isVerified(User user, PhotographerProfile profile) {
+        return user.isVerified() || profile.isHasBlueBadge();
     }
 }

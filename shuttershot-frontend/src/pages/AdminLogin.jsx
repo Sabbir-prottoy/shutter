@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { useAuth } from '../context/AuthContext'
 import { loginRequest } from '../services/api'
+import { triggerClickBurst } from '../components/ClickBurstLayer'
 
 export default function AdminLogin() {
   const { login } = useAuth()
@@ -72,6 +73,7 @@ export default function AdminLogin() {
           <button
             type="submit"
             disabled={submitting}
+            onClick={(event) => triggerClickBurst(event.currentTarget)}
             className="w-full rounded-card bg-accent-gradient px-6 py-3 font-medium text-white shadow-card transition-shadow hover:shadow-hover disabled:opacity-60"
           >
             {submitting ? 'Logging in…' : 'Log in'}

@@ -142,7 +142,7 @@ export default function PackageManager() {
               step="0.01"
               value={form.price}
               onChange={(event) => setForm({ ...form, price: event.target.value })}
-              placeholder="Price ($)"
+              placeholder="Price (৳)"
               className="rounded-card border border-border bg-surface px-4 py-3 text-ink placeholder:text-ink-muted focus:border-accent"
             />
             <input

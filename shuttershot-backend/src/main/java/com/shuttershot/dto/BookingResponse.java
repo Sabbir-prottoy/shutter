@@ -1,6 +1,7 @@
 package com.shuttershot.dto;
 
 import com.shuttershot.model.BookingStatus;
+import com.shuttershot.model.BookingVerificationMethod;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -32,9 +33,8 @@ public class BookingResponse {
     private String timeSlot;
     private BookingStatus status;
     private boolean otpVerified;
+    private BookingVerificationMethod verificationMethod;
+    private BigDecimal depositAmount;
+    private boolean depositPaid;
     private LocalDateTime createdAt;
-
-    // Only populated right after creation (see BookingService.create) — a
-    // stand-in for real SMS delivery, not stored or re-served afterward.
-    private String devOtpCode;
 }

@@ -4,27 +4,68 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import OtpInput from '../components/OtpInput'
+import { triggerClickBurst } from '../components/ClickBurstLayer'
 import { useAuth } from '../context/AuthContext'
 import {
   confirmBookingOtp,
   createBooking,
+  getBooking,
   getMyAccount,
   getPhotographer,
   getPhotographerPackages,
-  resendOtp,
+  initiateBookingDeposit,
+  setBookingVerificationMethod,
 } from '../services/api'
 
 const TIME_SLOTS = ['09:00-11:00', '11:00-13:00', '13:00-15:00', '15:00-17:00', '17:00-19:00']
 
 const STEPS = [
   { key: 'details', label: 'Details' },
-  { key: 'otp', label: 'Verify' },
+  { key: 'verify', label: 'Verify' },
+  { key: 'deposit', label: 'Deposit' },
   { key: 'confirmation', label: 'Confirmed' },
 ]
 
+const VERIFICATION_METHODS = [
+  {
+    key: 'PHONE_OTP',
+    label: 'Phone OTP',
+    description: 'Get a 6-digit code by text message to your phone number.',
+  },
+  {
+    key: 'EMAIL_OTP',
+    label: 'Email OTP',
+    description: 'Get a 6-digit code by email instead.',
+  },
+  {
+    key: 'QR_CODE',
+    label: 'QR code',
+    description: "Scan a QR code shown on the photographer's screen when you meet in person.",
+  },
+  {
+    key: 'TOTP',
+    label: 'Google Authenticator',
+    description: 'Scan a QR code with an authenticator app and enter the rotating code it shows.',
+  },
+]
+
+const VERIFICATION_METHOD_LABELS = Object.fromEntries(VERIFICATION_METHODS.map((m) => [m.key, m.label]))
+
+const BOOKING_STATUS_LABELS = {
+  PENDING: 'Pending confirmation',
+  CONFIRMED: 'Confirmed',
+  COMPLETED: 'Completed',
+  CANCELLED: 'Cancelled',
+}
+
+const DEPOSIT_BANNERS = {
+  failed: "Payment couldn't be verified, so the deposit wasn't recorded. You haven't been charged by us — please try again.",
+  cancelled: 'Checkout was cancelled, so no payment was made.',
+}
+
 export default function BookingFlow() {
   const { photographerId } = useParams()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const { user } = useAuth()
 
   const [profile, setProfile] = useState(null)
@@ -42,14 +83,20 @@ export default function BookingFlow() {
   const [submitting, setSubmitting] = useState(false)
 
   const [booking, setBooking] = useState(null)
+  const [navError, setNavError] = useState(null)
+
+  const [selectedMethod, setSelectedMethod] = useState('PHONE_OTP')
+  const [methodError, setMethodError] = useState(null)
+  const [methodSubmitting, setMethodSubmitting] = useState(false)
+  const [verificationSetup, setVerificationSetup] = useState(null)
+
   const [otpCode, setOtpCode] = useState('')
   const [otpError, setOtpError] = useState(null)
   const [otpSubmitting, setOtpSubmitting] = useState(false)
   const [resendStatus, setResendStatus] = useState('idle')
-  // No SMS gateway currently delivers to real numbers for this project (see
-  // OtpService's docs on the backend) — the code is shown here directly as
-  // a stand-in so booking stays completable end to end.
-  const [devOtpCode, setDevOtpCode] = useState(null)
+
+  const [depositRedirecting, setDepositRedirecting] = useState(false)
+  const [depositError, setDepositError] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -93,6 +140,84 @@ export default function BookingFlow() {
     }
   }, [user])
 
+  useEffect(() => {
+    const paymentResult = searchParams.get('payment')
+    const bookingId = searchParams.get('bookingId')
+    if (!paymentResult || !bookingId) return
+
+    // The SSLCommerz redirect is a full page reload, so all in-memory state
+    // (including which booking we were on) is gone — reload it from the server.
+    getBooking(bookingId)
+      .then((result) => {
+        setBooking(result)
+        setStep(paymentResult === 'success' ? 'confirmation' : 'deposit')
+        if (paymentResult !== 'success') {
+          setDepositError(DEPOSIT_BANNERS[paymentResult] || DEPOSIT_BANNERS.failed)
+        }
+      })
+      .catch(() => {
+        setDepositError(DEPOSIT_BANNERS.failed)
+      })
+      .finally(() => {
+        const next = new URLSearchParams(searchParams)
+        next.delete('payment')
+        next.delete('bookingId')
+        setSearchParams(next, { replace: true })
+      })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // QR verification happens on a different device (the photographer shows the
+  // code, the customer scans it with their own phone) — there's no code to type
+  // in on this screen, so poll for the moment it flips to verified instead.
+  useEffect(() => {
+    if (step !== 'verify' || booking?.otpVerified || verificationSetup?.method !== 'QR_CODE' || !booking?.id) return
+
+    const interval = setInterval(() => {
+      getBooking(booking.id)
+        .then((result) => {
+          if (result.otpVerified) {
+            setBooking(result)
+            setStep('deposit')
+          }
+        })
+        .catch(() => {
+          // Transient errors just get retried on the next tick.
+        })
+    }, 4000)
+
+    return () => clearInterval(interval)
+  }, [step, verificationSetup, booking?.id, booking?.otpVerified])
+
+  const reachableSteps = {
+    details: true,
+    verify: Boolean(booking),
+    deposit: Boolean(booking?.otpVerified),
+    confirmation: Boolean(booking?.depositPaid),
+  }
+
+  // The step tabs are real navigation, not just a progress display — clicking
+  // an already-reached one refreshes that booking from the server first, so
+  // whatever it shows (verified? deposit paid? current status?) is never stale.
+  function goToStep(key) {
+    if (!reachableSteps[key] || key === step) return
+    setNavError(null)
+
+    if (key === 'details' || !booking) {
+      setStep(key)
+      return
+    }
+
+    getBooking(booking.id)
+      .then((fresh) => {
+        setBooking(fresh)
+        setStep(key)
+      })
+      .catch(() => {
+        setNavError("We couldn't refresh this booking. Please try again.")
+      })
+  }
+
   async function handleSubmitDetails(event) {
     event.preventDefault()
     setFormError(null)
@@ -114,8 +239,7 @@ export default function BookingFlow() {
         timeSlot,
       })
       setBooking(result)
-      setDevOtpCode(result.devOtpCode || null)
-      setStep('otp')
+      setStep('verify')
     } catch (error) {
       setFormError(
         error?.response?.data?.message ||
@@ -126,12 +250,35 @@ export default function BookingFlow() {
     }
   }
 
-  async function handleConfirmOtp(event) {
+  async function handleContinueMethod() {
+    setMethodError(null)
+    setMethodSubmitting(true)
+    try {
+      const setup = await setBookingVerificationMethod(booking.id, selectedMethod)
+      setVerificationSetup(setup)
+      setOtpCode('')
+      setOtpError(null)
+      setResendStatus('idle')
+    } catch (error) {
+      setMethodError(error?.response?.data?.message || "We couldn't set that up. Please try again.")
+    } finally {
+      setMethodSubmitting(false)
+    }
+  }
+
+  function handleChangeMethod() {
+    setOtpCode('')
+    setOtpError(null)
+    setMethodError(null)
+    setVerificationSetup(null)
+  }
+
+  async function handleConfirmCode(event) {
     event.preventDefault()
     setOtpError(null)
 
     if (otpCode.length !== 6) {
-      setOtpError('Enter the 6-digit code we sent you.')
+      setOtpError('Enter the 6-digit code.')
       return
     }
 
@@ -139,7 +286,7 @@ export default function BookingFlow() {
     try {
       const result = await confirmBookingOtp(booking.id, otpCode)
       setBooking(result)
-      setStep('confirmation')
+      setStep('deposit')
     } catch (error) {
       setOtpError(error?.response?.data?.message || 'Invalid or expired code. Please try again.')
     } finally {
@@ -147,14 +294,27 @@ export default function BookingFlow() {
     }
   }
 
-  async function handleResend() {
+  async function handleResendCode() {
+    if (!verificationSetup) return
     setResendStatus('sending')
     try {
-      const result = await resendOtp(clientPhone)
-      setDevOtpCode(result?.devOtpCode || null)
+      const setup = await setBookingVerificationMethod(booking.id, verificationSetup.method)
+      setVerificationSetup(setup)
       setResendStatus('sent')
     } catch {
       setResendStatus('idle')
+    }
+  }
+
+  async function handlePayDeposit() {
+    setDepositError(null)
+    setDepositRedirecting(true)
+    try {
+      const { gatewayUrl } = await initiateBookingDeposit(booking.id)
+      window.location.href = gatewayUrl
+    } catch (error) {
+      setDepositError(error?.response?.data?.message || "We couldn't start checkout. Please try again.")
+      setDepositRedirecting(false)
     }
   }
 
@@ -200,6 +360,7 @@ export default function BookingFlow() {
         </p>
         <Link
           to={`/photographers/${photographerId}`}
+          onClick={(event) => triggerClickBurst(event.currentTarget)}
           className="mt-6 inline-block rounded-card bg-accent-gradient px-6 py-3 font-medium text-white shadow-card transition-shadow hover:shadow-hover"
         >
           Back to profile
@@ -217,9 +378,10 @@ export default function BookingFlow() {
           Book {profile.name}
         </h1>
 
-        <StepIndicator currentStep={step} />
+        <StepIndicator currentStep={step} reachable={reachableSteps} onNavigate={goToStep} />
+        {navError && <p className="mt-3 text-sm text-booked">{navError}</p>}
 
-        {step === 'details' && (
+        {step === 'details' && !booking && (
           <form onSubmit={handleSubmitDetails} className="mt-8 space-y-8">
             <div>
               <h2 className="font-sans text-lg font-semibold text-ink">Package</h2>
@@ -241,7 +403,7 @@ export default function BookingFlow() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="font-display text-lg font-bold text-accent">
-                        ${Number(pkg.price).toLocaleString()}
+                        ৳{Number(pkg.price).toLocaleString()}
                       </span>
                       <input
                         type="radio"
@@ -320,6 +482,7 @@ export default function BookingFlow() {
             <button
               type="submit"
               disabled={submitting}
+              onClick={(event) => triggerClickBurst(event.currentTarget)}
               className="w-full rounded-card bg-accent-gradient px-6 py-3 font-medium text-white shadow-card transition-shadow hover:shadow-hover disabled:opacity-60"
             >
               {submitting ? 'Submitting…' : 'Continue'}
@@ -327,55 +490,271 @@ export default function BookingFlow() {
           </form>
         )}
 
-        {step === 'otp' && (
-          <form onSubmit={handleConfirmOtp} className="mt-8 space-y-6">
-            <p className="text-ink-muted">
-              We sent a 6-digit verification code to <span className="text-ink">{clientPhone}</span>.
-              Enter it below to confirm your request.
+        {step === 'details' && booking && (
+          <div className="mt-8 rounded-card bg-surface p-8 shadow-card">
+            <h2 className="font-display text-2xl font-bold text-ink">Your request</h2>
+            <p className="mt-2 text-sm text-ink-muted">
+              Already submitted — these details can't be changed, but here's what was sent.
             </p>
 
-            {devOtpCode && (
-              <div className="rounded-card border border-accent/30 bg-accent/10 px-4 py-3">
-                <p className="text-sm text-ink-muted">
-                  SMS delivery isn't wired up yet for this demo, so here's your code directly:
-                </p>
-                <p className="mt-1 font-display text-2xl font-bold tracking-widest text-accent">
-                  {devOtpCode}
-                </p>
+            <dl className="mt-6 space-y-2 border-t border-border pt-6 text-sm">
+              <div className="flex justify-between">
+                <dt className="text-ink-muted">Package</dt>
+                <dd className="text-ink">{booking.packageTitle}</dd>
               </div>
-            )}
-
-            <OtpInput onChange={setOtpCode} />
-
-            {otpError && <p className="text-sm text-booked">{otpError}</p>}
+              <div className="flex justify-between">
+                <dt className="text-ink-muted">Date</dt>
+                <dd className="text-ink">
+                  {booking.bookingDate} &middot; {booking.timeSlot}
+                </dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-ink-muted">Name</dt>
+                <dd className="text-ink">{booking.clientName}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-ink-muted">Phone</dt>
+                <dd className="text-ink">{booking.clientPhone}</dd>
+              </div>
+              <div className="flex justify-between">
+                <dt className="text-ink-muted">Email</dt>
+                <dd className="text-ink">{booking.clientEmail}</dd>
+              </div>
+            </dl>
 
             <button
-              type="submit"
-              disabled={otpSubmitting}
-              className="w-full rounded-card bg-accent-gradient px-6 py-3 font-medium text-white shadow-card transition-shadow hover:shadow-hover disabled:opacity-60 sm:w-auto"
+              type="button"
+              onClick={(event) => {
+                triggerClickBurst(event.currentTarget)
+                goToStep('verify')
+              }}
+              className="mt-6 rounded-card bg-accent-gradient px-6 py-3 font-medium text-white shadow-card transition-shadow hover:shadow-hover"
             >
-              {otpSubmitting ? 'Verifying…' : 'Verify code'}
+              Continue
             </button>
+          </div>
+        )}
 
-            <div>
-              <button
-                type="button"
-                onClick={handleResend}
-                disabled={resendStatus === 'sending'}
-                className="text-sm text-ink-muted underline transition-colors hover:text-accent disabled:opacity-60"
-              >
-                {resendStatus === 'sent' ? 'Code resent' : resendStatus === 'sending' ? 'Sending…' : 'Resend code'}
-              </button>
-            </div>
-          </form>
+        {step === 'verify' && booking && (
+          <div className="mt-8 space-y-6">
+            {booking.otpVerified ? (
+              <div className="rounded-card border border-free/30 bg-free/10 p-6">
+                <p className="font-display text-lg font-bold text-ink">Verified</p>
+                <p className="mt-2 text-sm text-ink-muted">
+                  This booking was verified via{' '}
+                  {VERIFICATION_METHOD_LABELS[booking.verificationMethod] || 'your chosen method'}.
+                </p>
+              </div>
+            ) : !verificationSetup ? (
+              <>
+                <p className="text-ink-muted">Choose how you'd like to verify this booking.</p>
+
+                <div className="space-y-3">
+                  {VERIFICATION_METHODS.map((method) => (
+                    <label
+                      key={method.key}
+                      className={`flex cursor-pointer items-start gap-3 rounded-card border p-4 transition-colors ${
+                        selectedMethod === method.key
+                          ? 'border-accent bg-surface-raised'
+                          : 'border-border bg-surface'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="verification-method"
+                        value={method.key}
+                        checked={selectedMethod === method.key}
+                        onChange={() => setSelectedMethod(method.key)}
+                        className="mt-1 h-4 w-4 accent-accent"
+                      />
+                      <div>
+                        <p className="font-medium text-ink">{method.label}</p>
+                        <p className="text-sm text-ink-muted">{method.description}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+
+                {methodError && <p className="text-sm text-booked">{methodError}</p>}
+
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    triggerClickBurst(event.currentTarget)
+                    handleContinueMethod()
+                  }}
+                  disabled={methodSubmitting}
+                  className="w-full rounded-card bg-accent-gradient px-6 py-3 font-medium text-white shadow-card transition-shadow hover:shadow-hover disabled:opacity-60 sm:w-auto"
+                >
+                  {methodSubmitting ? 'Setting up…' : 'Continue'}
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={handleChangeMethod}
+                  className="text-sm text-ink-muted underline transition-colors hover:text-accent"
+                >
+                  &larr; Choose a different verification method
+                </button>
+
+                {(verificationSetup.method === 'PHONE_OTP' || verificationSetup.method === 'EMAIL_OTP') && (
+                  <form onSubmit={handleConfirmCode} className="space-y-6">
+                    <p className="text-ink-muted">{verificationSetup.instructions}</p>
+
+                    {verificationSetup.devOtpCode && (
+                      <div className="rounded-card border border-accent/30 bg-accent/10 px-4 py-3">
+                        <p className="text-sm text-ink-muted">
+                          Real delivery isn't guaranteed for this demo, so here's your code directly:
+                        </p>
+                        <p className="mt-1 font-display text-2xl font-bold tracking-widest text-accent">
+                          {verificationSetup.devOtpCode}
+                        </p>
+                      </div>
+                    )}
+
+                    <OtpInput onChange={setOtpCode} />
+
+                    {otpError && <p className="text-sm text-booked">{otpError}</p>}
+
+                    <button
+                      type="submit"
+                      disabled={otpSubmitting}
+                      onClick={(event) => triggerClickBurst(event.currentTarget)}
+                      className="w-full rounded-card bg-accent-gradient px-6 py-3 font-medium text-white shadow-card transition-shadow hover:shadow-hover disabled:opacity-60 sm:w-auto"
+                    >
+                      {otpSubmitting ? 'Verifying…' : 'Verify code'}
+                    </button>
+
+                    <div>
+                      <button
+                        type="button"
+                        onClick={handleResendCode}
+                        disabled={resendStatus === 'sending'}
+                        className="text-sm text-ink-muted underline transition-colors hover:text-accent disabled:opacity-60"
+                      >
+                        {resendStatus === 'sent' ? 'Code resent' : resendStatus === 'sending' ? 'Sending…' : 'Resend code'}
+                      </button>
+                    </div>
+                  </form>
+                )}
+
+                {verificationSetup.method === 'TOTP' && (
+                  <form onSubmit={handleConfirmCode} className="space-y-6">
+                    <p className="text-ink-muted">{verificationSetup.instructions}</p>
+
+                    {verificationSetup.totpQrDataUri && (
+                      <div className="flex flex-col items-center gap-3 rounded-card border border-border bg-surface p-6">
+                        <img src={verificationSetup.totpQrDataUri} alt="Authenticator enrollment QR code" className="h-48 w-48" />
+                        <p className="text-xs text-ink-muted">Can't scan? Enter this key manually:</p>
+                        <p className="rounded bg-surface-raised px-3 py-1.5 font-mono text-sm tracking-wider text-ink">
+                          {verificationSetup.totpSecret}
+                        </p>
+                      </div>
+                    )}
+
+                    <OtpInput onChange={setOtpCode} />
+
+                    {otpError && <p className="text-sm text-booked">{otpError}</p>}
+
+                    <button
+                      type="submit"
+                      disabled={otpSubmitting}
+                      onClick={(event) => triggerClickBurst(event.currentTarget)}
+                      className="w-full rounded-card bg-accent-gradient px-6 py-3 font-medium text-white shadow-card transition-shadow hover:shadow-hover disabled:opacity-60 sm:w-auto"
+                    >
+                      {otpSubmitting ? 'Verifying…' : 'Verify code'}
+                    </button>
+                  </form>
+                )}
+
+                {verificationSetup.method === 'QR_CODE' && (
+                  <div className="rounded-card border border-border bg-surface p-6">
+                    <p className="text-ink-muted">{verificationSetup.instructions}</p>
+                    <p className="mt-4 text-sm text-ink-muted">Waiting for the scan to complete…</p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+
+        {step === 'deposit' && booking && (
+          <div className="mt-8 rounded-card bg-surface p-8 shadow-card">
+            {booking.depositPaid ? (
+              <>
+                <h2 className="font-display text-2xl font-bold text-ink">Deposit paid</h2>
+                <p className="mt-3 text-ink-muted">
+                  You've already paid the ৳{Number(booking.depositAmount).toLocaleString()} deposit for this
+                  booking.
+                </p>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    triggerClickBurst(event.currentTarget)
+                    goToStep('confirmation')
+                  }}
+                  className="mt-6 rounded-card bg-accent-gradient px-6 py-3 font-medium text-white shadow-card transition-shadow hover:shadow-hover"
+                >
+                  Continue
+                </button>
+              </>
+            ) : (
+              <>
+                <h2 className="font-display text-2xl font-bold text-ink">Pay your deposit</h2>
+                <p className="mt-3 text-ink-muted">
+                  To confirm your request, pay a 10% deposit now. The rest is settled directly with{' '}
+                  {profile.name}.
+                </p>
+
+                <div className="mt-6 flex items-center justify-between rounded-card border border-border bg-surface-raised px-4 py-3">
+                  <span className="text-sm text-ink-muted">Deposit due (10%)</span>
+                  <span className="font-display text-xl font-bold text-ink">
+                    ৳{Number(booking.depositAmount).toLocaleString()}
+                  </span>
+                </div>
+
+                {depositError && <p className="mt-3 text-sm text-booked">{depositError}</p>}
+
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    triggerClickBurst(event.currentTarget)
+                    handlePayDeposit()
+                  }}
+                  disabled={depositRedirecting}
+                  className="mt-6 w-full rounded-card bg-accent-gradient px-6 py-3 font-medium text-white shadow-card transition-shadow hover:shadow-hover disabled:opacity-60 sm:w-auto"
+                >
+                  {depositRedirecting ? 'Redirecting to payment…' : `Pay ৳${Number(booking.depositAmount).toLocaleString()} deposit`}
+                </button>
+                <p className="mt-2 text-xs text-ink-muted">
+                  You'll be taken to SSLCommerz's secure checkout to complete payment in BDT.
+                </p>
+              </>
+            )}
+          </div>
         )}
 
         {step === 'confirmation' && booking && (
           <div className="mt-8 rounded-card bg-surface p-8 shadow-card">
-            <h2 className="font-display text-2xl font-bold text-ink">Request sent!</h2>
+            <h2 className="font-display text-2xl font-bold text-ink">
+              {booking.status === 'CONFIRMED'
+                ? "You're booked!"
+                : booking.status === 'COMPLETED'
+                  ? 'Session completed'
+                  : booking.status === 'CANCELLED'
+                    ? 'Booking cancelled'
+                    : 'Request sent!'}
+            </h2>
             <p className="mt-3 text-ink-muted">
-              Your booking request has been sent to {profile.name}. They'll confirm your session
-              shortly — we'll be in touch at {booking.clientEmail}.
+              {booking.status === 'PENDING'
+                ? `Your booking request has been sent to ${profile.name}. They'll confirm your session shortly — we'll be in touch at ${booking.clientEmail}.`
+                : booking.status === 'CONFIRMED'
+                  ? `${profile.name} has confirmed this session.`
+                  : booking.status === 'COMPLETED'
+                    ? `Your session with ${profile.name} is complete.`
+                    : `This booking with ${profile.name} was cancelled.`}
             </p>
 
             <dl className="mt-6 space-y-2 border-t border-border pt-6 text-sm">
@@ -388,13 +767,18 @@ export default function BookingFlow() {
                 <dd className="text-ink">{booking.timeSlot}</dd>
               </div>
               <div className="flex justify-between">
+                <dt className="text-ink-muted">Deposit paid</dt>
+                <dd className="text-ink">৳{Number(booking.depositAmount).toLocaleString()}</dd>
+              </div>
+              <div className="flex justify-between">
                 <dt className="text-ink-muted">Status</dt>
-                <dd className="text-ink">Pending confirmation</dd>
+                <dd className="text-ink">{BOOKING_STATUS_LABELS[booking.status] || booking.status}</dd>
               </div>
             </dl>
 
             <Link
               to={`/photographers/${photographerId}`}
+              onClick={(event) => triggerClickBurst(event.currentTarget)}
               className="mt-6 inline-block rounded-card bg-accent-gradient px-6 py-3 font-medium text-white shadow-card transition-shadow hover:shadow-hover"
             >
               Back to profile
@@ -408,23 +792,34 @@ export default function BookingFlow() {
   )
 }
 
-function StepIndicator({ currentStep }) {
+function StepIndicator({ currentStep, reachable, onNavigate }) {
   const currentIndex = STEPS.findIndex((s) => s.key === currentStep)
 
   return (
     <div className="mt-6 flex items-center gap-2 text-sm">
-      {STEPS.map((s, index) => (
-        <div key={s.key} className="flex items-center gap-2">
-          <span
-            className={
-              index <= currentIndex ? 'font-medium text-accent' : 'text-ink-muted'
-            }
-          >
-            {s.label}
-          </span>
-          {index < STEPS.length - 1 && <span className="text-border">&rarr;</span>}
-        </div>
-      ))}
+      {STEPS.map((s, index) => {
+        const isReachable = reachable[s.key]
+        const isCurrent = index === currentIndex
+        return (
+          <div key={s.key} className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => onNavigate(s.key)}
+              disabled={!isReachable}
+              className={
+                isCurrent
+                  ? 'font-medium text-accent'
+                  : isReachable
+                    ? 'text-ink underline decoration-dotted underline-offset-4 transition-colors hover:text-accent'
+                    : 'cursor-not-allowed text-ink-muted'
+              }
+            >
+              {s.label}
+            </button>
+            {index < STEPS.length - 1 && <span className="text-border">&rarr;</span>}
+          </div>
+        )
+      })}
     </div>
   )
 }

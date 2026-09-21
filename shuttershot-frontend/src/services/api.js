@@ -36,6 +36,10 @@ export function forgotPasswordRequest(payload) {
   return api.post('/auth/forgot-password', payload).then((res) => res.data)
 }
 
+export function verifyResetOtp(payload) {
+  return api.post('/auth/verify-reset-otp', payload).then((res) => res.data)
+}
+
 export function resetPasswordRequest(payload) {
   return api.post('/auth/reset-password', payload).then((res) => res.data)
 }
@@ -156,13 +160,29 @@ export function confirmBookingOtp(bookingId, otpCode) {
   return api.post(`/bookings/${bookingId}/confirm-otp`, { otpCode }).then((res) => res.data)
 }
 
-export function resendOtp(contact) {
-  return api.post('/otp/send', { contact }).then((res) => res.data)
+export function getBooking(id) {
+  return api.get(`/bookings/${id}`).then((res) => res.data)
+}
+
+export function initiateBookingDeposit(bookingId) {
+  return api.post(`/bookings/${bookingId}/deposit/initiate`).then((res) => res.data)
+}
+
+export function setBookingVerificationMethod(bookingId, method) {
+  return api.post(`/bookings/${bookingId}/verification-method`, { method }).then((res) => res.data)
+}
+
+export function verifyBookingByQr(token) {
+  return api.post(`/bookings/verify-qr/${token}`).then((res) => res.data)
 }
 
 // Bookings (photographer dashboard, own bookings)
 export function getMyBookings(photographerId) {
   return api.get('/bookings', { params: { photographerId } }).then((res) => res.data)
+}
+
+export function getBookingQrCode(bookingId) {
+  return api.get(`/bookings/${bookingId}/qr-code`).then((res) => res.data)
 }
 
 // Bookings (customer account, bookings I made while logged in)
@@ -197,6 +217,10 @@ export function approvePhoto(id) {
 
 export function rejectPhoto(id) {
   return api.put(`/admin/photos/${id}/reject`).then((res) => res.data)
+}
+
+export function checkPhotoForAi(id) {
+  return api.post(`/admin/photos/${id}/ai-check`).then((res) => res.data)
 }
 
 export function getAdminUsers(role) {
@@ -258,6 +282,37 @@ export function removeUserHistoryEntry(id, password) {
 
 export function removeAllUserHistory(password) {
   return api.delete('/admin/user-history', { data: { password } }).then((res) => res.data)
+}
+
+// Blue badge (photographer, own status/purchase)
+export function getBlueBadgeStatus() {
+  return api.get('/blue-badge/status').then((res) => res.data)
+}
+
+export function purchaseBlueBadge() {
+  return api.post('/blue-badge/purchase').then((res) => res.data)
+}
+
+// Blue badge management (admin, main-admin-only)
+export function getBlueBadgeSettings() {
+  return api.get('/admin/blue-badge/settings').then((res) => res.data)
+}
+
+export function updateBlueBadgeSettings(price) {
+  return api.put('/admin/blue-badge/settings', { price }).then((res) => res.data)
+}
+
+export function getBlueBadgeHolders() {
+  return api.get('/admin/blue-badge/holders').then((res) => res.data)
+}
+
+export function revokeBlueBadge(userId) {
+  return api.put(`/admin/blue-badge/holders/${userId}/revoke`).then((res) => res.data)
+}
+
+// Admin overview (analytics dashboard, any ADMIN/MODERATOR)
+export function getAdminOverview() {
+  return api.get('/admin/overview').then((res) => res.data)
 }
 
 // Chatbot (public, site-wide)

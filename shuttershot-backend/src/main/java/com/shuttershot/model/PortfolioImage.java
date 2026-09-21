@@ -61,4 +61,18 @@ public class PortfolioImage {
 
     @Column(name = "flag_reason")
     private String flagReason;
+
+    // Populated only once an admin clicks "Check for AI" (PortfolioService.checkForAi)
+    // — null until then. See AiImageDetectionService for what populates these.
+    @Column(name = "ai_check_verdict")
+    private String aiCheckVerdict;
+
+    @Column(name = "ai_check_confidence")
+    private Double aiCheckConfidence;
+
+    @Column(name = "ai_check_generator")
+    private String aiCheckGenerator;
+
+    @Column(name = "ai_checked_at")
+    private LocalDateTime aiCheckedAt;
 }

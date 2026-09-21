@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { triggerClickBurst } from './ClickBurstLayer'
 
 export default function PackageCard({ pkg, onEdit, onDelete }) {
   const { photographerId, title, description, price, durationHours, deliveryDays } = pkg
@@ -9,7 +10,7 @@ export default function PackageCard({ pkg, onEdit, onDelete }) {
       <h3 className="font-sans text-xl font-semibold text-ink">{title}</h3>
 
       <p className="mt-2 font-display text-3xl font-bold text-accent">
-        ${Number(price).toLocaleString()}
+        ৳{Number(price).toLocaleString()}
       </p>
 
       <dl className="mt-3 space-y-1 text-sm text-ink-muted">
@@ -49,6 +50,7 @@ export default function PackageCard({ pkg, onEdit, onDelete }) {
       ) : (
         <Link
           to={`/book/${photographerId}?package=${pkg.id}`}
+          onClick={(event) => triggerClickBurst(event.currentTarget)}
           className="mt-6 rounded-card bg-accent-gradient px-4 py-2.5 text-center text-sm font-medium text-white shadow-card transition-shadow hover:shadow-hover"
         >
           Book session

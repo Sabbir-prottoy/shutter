@@ -6,6 +6,8 @@ import PortfolioGrid from '../components/PortfolioGrid'
 import PackageCard from '../components/PackageCard'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import ReviewCard from '../components/ReviewCard'
+import BlueCheckIcon from '../components/BlueCheckIcon'
+import { triggerClickBurst } from '../components/ClickBurstLayer'
 import {
   getPhotographer,
   getPhotographerPackages,
@@ -85,8 +87,18 @@ export default function PhotographerProfile() {
     )
   }
 
-  const { name, bio, profilePhotoUrl, baseLocation, specialties, yearsExperience, ratingAvg, totalReviews, verified } =
-    profile
+  const {
+    name,
+    bio,
+    profilePhotoUrl,
+    baseLocation,
+    specialties,
+    yearsExperience,
+    ratingAvg,
+    totalReviews,
+    verified,
+    hasBlueBadge,
+  } = profile
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
@@ -104,7 +116,10 @@ export default function PhotographerProfile() {
 
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-3">
-              <h1 className="font-display text-4xl font-bold text-ink">{name}</h1>
+              <h1 className="flex items-center gap-2 font-display text-4xl font-bold text-ink">
+                {name}
+                {hasBlueBadge && <BlueCheckIcon className="h-7 w-7 shrink-0" />}
+              </h1>
               {verified && (
                 <span className="rounded-full bg-free/20 px-2.5 py-1 text-xs font-medium text-free">
                   Verified
@@ -144,6 +159,7 @@ export default function PhotographerProfile() {
 
             <Link
               to={`/book/${id}`}
+              onClick={(event) => triggerClickBurst(event.currentTarget)}
               className="mt-6 inline-block rounded-card bg-accent-gradient px-6 py-3 font-medium text-white shadow-card transition-shadow hover:shadow-hover"
             >
               Book session

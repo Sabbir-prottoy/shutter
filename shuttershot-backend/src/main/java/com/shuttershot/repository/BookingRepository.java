@@ -7,12 +7,15 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     List<Booking> findByPhotographerId(Long photographerId);
 
     List<Booking> findByCustomerIdOrderByBookingDateDesc(Long customerId);
+
+    Optional<Booking> findByQrVerificationToken(String qrVerificationToken);
 
     // Used when permanently removing a user account — bookings they made
     // while logged in fall back to being anonymous/guest records rather

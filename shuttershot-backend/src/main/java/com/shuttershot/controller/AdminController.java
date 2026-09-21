@@ -2,13 +2,16 @@ package com.shuttershot.controller;
 
 import com.shuttershot.dto.AccountHistoryResponse;
 import com.shuttershot.dto.AdminUserResponse;
+import com.shuttershot.dto.BlueBadgeHolderResponse;
 import com.shuttershot.dto.ConfirmPasswordRequest;
 import com.shuttershot.dto.CreateStaffAccountRequest;
 import com.shuttershot.dto.PortfolioImageResponse;
 import com.shuttershot.dto.ReviewResponse;
 import com.shuttershot.dto.StaffAccountResponse;
+import com.shuttershot.dto.UpdateBlueBadgeSettingsRequest;
 import com.shuttershot.model.Role;
 import com.shuttershot.service.AdminUserService;
+import com.shuttershot.service.BlueBadgeService;
 import com.shuttershot.service.PortfolioService;
 import com.shuttershot.service.ReviewService;
 import com.shuttershot.service.UserPrincipal;
@@ -27,7 +30,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/admin")
@@ -37,6 +42,7 @@ public class AdminController {
     private final ReviewService reviewService;
     private final PortfolioService portfolioService;
     private final AdminUserService adminUserService;
+    private final BlueBadgeService blueBadgeService;
 
     @GetMapping("/reviews/pending")
     public ResponseEntity<List<ReviewResponse>> pendingReviews() {
@@ -67,6 +73,11 @@ public class AdminController {
     public ResponseEntity<Void> rejectPhoto(@PathVariable Long id) {
         portfolioService.rejectByAdmin(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/photos/{id}/ai-check")
+    public ResponseEntity<PortfolioImageResponse> checkPhotoForAi(@PathVariable Long id) {
+        return ResponseEntity.ok(portfolioService.checkForAi(id));
     }
 
     @GetMapping("/users")
@@ -171,6 +182,35 @@ public class AdminController {
             @Valid @RequestBody ConfirmPasswordRequest request,
             @AuthenticationPrincipal UserPrincipal principal) {
         adminUserService.removeAllUserHistory(principal.getId(), request.getPassword());
+        return ResponseEntity.noContent().build();
+    }
+
+    // Blue badge management — main-admin-only, per BlueBadgeService.
+    @GetMapping("/blue-badge/settings")
+    public ResponseEntity<Map<String, BigDecimal>> getBlueBadgeSettings(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(Map.of("price", blueBadgeService.getCurrentPriceForAdmin(principal.getId())));
+    }
+
+    @PutMapping("/blue-badge/settings")
+    public ResponseEntity<Map<String, BigDecimal>> updateBlueBadgePrice(
+            @Valid @RequestBody UpdateBlueBadgeSettingsRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        BigDecimal price = blueBadgeService.updatePrice(request.getPrice(), principal.getId());
+        return ResponseEntity.ok(Map.of("price", price));
+    }
+
+    @GetMapping("/blue-badge/holders")
+    public ResponseEntity<List<BlueBadgeHolderResponse>> listBlueBadgeHolders(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(blueBadgeService.listHolders(principal.getId()));
+    }
+
+    @PutMapping("/blue-badge/holders/{userId}/revoke")
+    public ResponseEntity<Void> revokeBlueBadge(
+            @PathVariable Long userId,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        blueBadgeService.revoke(userId, principal.getId());
         return ResponseEntity.noContent().build();
     }
 }

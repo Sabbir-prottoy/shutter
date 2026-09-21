@@ -28,7 +28,7 @@ export default function Camera3D({ className = '' }) {
   }
 
   return (
-    <div className={`relative h-40 w-40 sm:h-56 sm:w-56 lg:h-64 lg:w-64 ${className}`} style={{ perspective: '1200px' }}>
+    <div className={`relative h-52 w-52 sm:h-72 sm:w-72 lg:h-80 lg:w-80 xl:h-[26rem] xl:w-[26rem] ${className}`} style={{ perspective: '1200px' }}>
       {/* Ambient backdrop glow — drifts on its own, independent of cursor tilt */}
       <div
         aria-hidden="true"
@@ -62,7 +62,7 @@ export default function Camera3D({ className = '' }) {
           {/* Second photo — peeking out behind, offset down-and-right,
               clipping under the front card for a stacked-photos look */}
           <div
-            className="absolute inset-2 top-6 left-8 overflow-hidden rounded-2xl border border-border shadow-card"
+            className="absolute inset-2 top-8 left-10 overflow-hidden rounded-2xl border border-border shadow-card"
             style={{ transform: 'translateZ(-18px) rotate(7deg)' }}
           >
             <img

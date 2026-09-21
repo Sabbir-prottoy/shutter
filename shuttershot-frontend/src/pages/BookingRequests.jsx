@@ -1,11 +1,18 @@
 import { useEffect, useState } from 'react'
-import { getMyBookings, getMyPackages, getMyProfile, updateBookingStatus } from '../services/api'
+import { getBookingQrCode, getMyBookings, getMyPackages, getMyProfile, updateBookingStatus } from '../services/api'
 
 const STATUS_STYLES = {
   PENDING: 'bg-border text-ink-muted',
   CONFIRMED: 'bg-free/20 text-free',
   COMPLETED: 'bg-accent/15 text-accent',
   CANCELLED: 'bg-booked/20 text-booked',
+}
+
+const VERIFICATION_METHOD_LABELS = {
+  PHONE_OTP: 'Phone OTP',
+  EMAIL_OTP: 'Email OTP',
+  QR_CODE: 'QR code',
+  TOTP: 'Google Authenticator',
 }
 
 const SECTIONS = [
@@ -21,10 +28,26 @@ export default function BookingRequests() {
   const [status, setStatus] = useState('loading')
   const [error, setError] = useState(null)
   const [updatingId, setUpdatingId] = useState(null)
+  const [qrModal, setQrModal] = useState(null)
 
   useEffect(() => {
     loadData()
   }, [])
+
+  async function handleShowQr(booking) {
+    setQrModal({ booking, status: 'loading', image: null, error: null })
+    try {
+      const { qrCodeDataUri } = await getBookingQrCode(booking.id)
+      setQrModal({ booking, status: 'ready', image: qrCodeDataUri, error: null })
+    } catch (err) {
+      setQrModal({
+        booking,
+        status: 'error',
+        image: null,
+        error: err?.response?.data?.message || "We couldn't load this booking's QR code.",
+      })
+    }
+  }
 
   function loadData() {
     setStatus('loading')
@@ -91,18 +114,61 @@ export default function BookingRequests() {
                   pkg={packagesById[booking.packageId]}
                   updating={updatingId === booking.id}
                   onStatusChange={handleStatusChange}
+                  onShowQr={handleShowQr}
                 />
               ))}
             </div>
           </div>
         )
       })}
+
+      {qrModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4">
+          <div className="w-full max-w-sm rounded-card bg-surface p-6 shadow-hover">
+            <h3 className="font-display text-lg font-bold text-ink">
+              QR code for {qrModal.booking.clientName}
+            </h3>
+            <p className="mt-2 text-sm text-ink-muted">
+              Have the customer scan this with their phone's camera to verify their booking.
+            </p>
+
+            <div className="mt-4 flex items-center justify-center rounded-card border border-border bg-surface-raised p-4">
+              {qrModal.status === 'loading' && <p className="text-sm text-ink-muted">Loading…</p>}
+              {qrModal.status === 'error' && <p className="text-sm text-booked">{qrModal.error}</p>}
+              {qrModal.status === 'ready' && (
+                <img src={qrModal.image} alt="Booking verification QR code" className="h-56 w-56" />
+              )}
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() => setQrModal(null)}
+                className="rounded-card bg-accent-gradient px-4 py-2 text-sm font-medium text-white shadow-card transition-shadow hover:shadow-hover"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
-function BookingCard({ booking, pkg, updating, onStatusChange }) {
-  const { clientName, clientPhone, clientEmail, bookingDate, timeSlot, status: bookingStatus, otpVerified } = booking
+function BookingCard({ booking, pkg, updating, onStatusChange, onShowQr }) {
+  const {
+    clientName,
+    clientPhone,
+    clientEmail,
+    bookingDate,
+    timeSlot,
+    status: bookingStatus,
+    otpVerified,
+    verificationMethod,
+    depositAmount,
+    depositPaid,
+  } = booking
 
   return (
     <div className="rounded-card bg-surface p-6 shadow-card">
@@ -131,10 +197,40 @@ function BookingCard({ booking, pkg, updating, onStatusChange }) {
           <dt>Email:</dt>
           <dd>{clientEmail}</dd>
         </div>
+        {depositAmount != null && (
+          <div className="flex gap-1.5">
+            <dt>Deposit (10%):</dt>
+            <dd className={depositPaid ? 'text-free' : 'text-ink'}>
+              ৳{Number(depositAmount).toLocaleString()} {depositPaid ? '— paid' : '— not paid yet'}
+            </dd>
+          </div>
+        )}
+        {verificationMethod && (
+          <div className="flex gap-1.5">
+            <dt>Verification:</dt>
+            <dd>{VERIFICATION_METHOD_LABELS[verificationMethod] || verificationMethod}</dd>
+          </div>
+        )}
       </dl>
 
       {bookingStatus === 'PENDING' && !otpVerified && (
-        <p className="mt-3 text-sm text-ink-muted">Waiting for the client to verify their phone number.</p>
+        <p className="mt-3 text-sm text-ink-muted">
+          Waiting for the client to complete verification
+          {verificationMethod ? ` (${VERIFICATION_METHOD_LABELS[verificationMethod] || verificationMethod})` : ''}.
+        </p>
+      )}
+      {bookingStatus === 'PENDING' && otpVerified && !depositPaid && (
+        <p className="mt-3 text-sm text-ink-muted">Waiting for the client to pay their 10% deposit.</p>
+      )}
+
+      {bookingStatus === 'PENDING' && !otpVerified && verificationMethod === 'QR_CODE' && (
+        <button
+          type="button"
+          onClick={() => onShowQr(booking)}
+          className="mt-3 text-sm text-accent underline transition-opacity hover:opacity-80"
+        >
+          Show QR code
+        </button>
       )}
 
       <div className="mt-4 flex gap-4 text-sm">
@@ -142,7 +238,7 @@ function BookingCard({ booking, pkg, updating, onStatusChange }) {
           <>
             <button
               type="button"
-              disabled={!otpVerified || updating}
+              disabled={!otpVerified || !depositPaid || updating}
               onClick={() => onStatusChange(booking, 'CONFIRMED')}
               className="text-accent underline transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:text-ink-muted disabled:opacity-60"
             >

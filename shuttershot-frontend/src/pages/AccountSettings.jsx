@@ -14,7 +14,7 @@ const STATUS_STYLES = {
 
 const currencyFormatter = new Intl.NumberFormat('en-US', {
   style: 'currency',
-  currency: 'USD',
+  currency: 'BDT',
   maximumFractionDigits: 0,
 })
 
@@ -227,6 +227,8 @@ function BookingDetailCard({ booking }) {
     timeSlot,
     status: bookingStatus,
     otpVerified,
+    depositAmount,
+    depositPaid,
   } = booking
 
   return (
@@ -253,10 +255,21 @@ function BookingDetailCard({ booking }) {
             {bookingDate} &middot; {timeSlot}
           </dd>
         </div>
+        {depositAmount != null && (
+          <div className="flex gap-1.5">
+            <dt>Deposit (10%):</dt>
+            <dd className={depositPaid ? 'text-free' : 'text-ink'}>
+              {currencyFormatter.format(depositAmount)} {depositPaid ? '— paid' : '— not paid yet'}
+            </dd>
+          </div>
+        )}
       </dl>
 
       {bookingStatus === 'PENDING' && !otpVerified && (
-        <p className="mt-3 text-sm text-ink-muted">Waiting for phone verification to complete.</p>
+        <p className="mt-3 text-sm text-ink-muted">Waiting for verification to complete.</p>
+      )}
+      {bookingStatus === 'PENDING' && otpVerified && !depositPaid && (
+        <p className="mt-3 text-sm text-ink-muted">Deposit payment still needed to confirm this booking.</p>
       )}
     </div>
   )
