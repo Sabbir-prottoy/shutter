@@ -56,6 +56,11 @@ public class SecurityConfig {
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**", "/api/otp/**", "/uploads/**", "/api/chatbot/**").permitAll()
+                        // Anyone can use the AI chat; only the stored-history
+                        // endpoints below it require an account.
+                        .requestMatchers(HttpMethod.POST, "/api/ai-chat/messages",
+                                "/api/ai-chat/transcribe").permitAll()
+                        .requestMatchers("/api/ai-chat/**").authenticated()
                         // SSLCommerz redirects the customer's own browser here with a plain
                         // form POST — no JWT is available, and none is needed: the handler
                         // re-validates the payment against SSLCommerz's own API before it

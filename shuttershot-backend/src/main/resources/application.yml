@@ -63,6 +63,16 @@ gemini:
   api-key: ${GEMINI_API_KEY:}
   model: ${GEMINI_MODEL:gemini-3.6-flash}
 
+groq:
+  # Powers the full-page AI chat (/chat). Server-side only, never sent to the
+  # frontend. Keys come from https://console.groq.com.
+  api-key: ${GROQ_API_KEY:}
+  # A reasoning model — see GroqChatService for why max_tokens must stay large.
+  model: ${GROQ_MODEL:openai/gpt-oss-120b}
+  # Speech-to-text for the spoken chat. Billed against a separate
+  # audio-seconds quota, not the chat's tokens-per-minute budget.
+  transcription-model: ${GROQ_TRANSCRIPTION_MODEL:whisper-large-v3-turbo}
+
 aiornot:
   # AI-image detection for admin photo moderation — https://aiornot.com.
   # Server-side only, never sent to the frontend.

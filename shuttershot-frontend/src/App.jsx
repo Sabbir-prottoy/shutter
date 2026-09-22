@@ -5,6 +5,8 @@ import PhotographerProfile from './pages/PhotographerProfile'
 import BookingFlow from './pages/BookingFlow'
 import VerifyBookingQr from './pages/VerifyBookingQr'
 import Entertainment from './pages/Entertainment'
+import AiChat from './pages/AiChat'
+import VoiceChat from './pages/VoiceChat'
 import PhotographerDashboard from './pages/PhotographerDashboard'
 import PortfolioManager from './pages/PortfolioManager'
 import ProfileSettings from './pages/ProfileSettings'
@@ -53,6 +55,8 @@ export default function App() {
         <Route path="/book/:photographerId" element={<BookingFlow />} />
         <Route path="/verify-booking/:token" element={<VerifyBookingQr />} />
         <Route path="/entertainment" element={<Entertainment />} />
+        <Route path="/chat" element={<AiChat />} />
+        <Route path="/speak" element={<VoiceChat />} />
         <Route path="/faq" element={<FAQ />} />
 
         <Route path="/login" element={<Login />} />

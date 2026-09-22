@@ -223,6 +223,32 @@ export function checkPhotoForAi(id) {
   return api.post(`/admin/photos/${id}/ai-check`).then((res) => res.data)
 }
 
+export function sendAiChatMessage({ message, conversationId, history, mode }) {
+  return api
+    .post('/ai-chat/messages', { message, conversationId, history, mode })
+    .then((res) => res.data)
+}
+
+export function getAiChatConversations(mode) {
+  return api.get('/ai-chat/conversations', { params: { mode } }).then((res) => res.data)
+}
+
+export function transcribeAudio(blob) {
+  const formData = new FormData()
+  // The extension matters: Whisper picks its decoder from the filename.
+  const extension = blob.type.includes('ogg') ? 'ogg' : blob.type.includes('mp4') ? 'mp4' : 'webm'
+  formData.append('audio', blob, `speech.${extension}`)
+  return api.post('/ai-chat/transcribe', formData).then((res) => res.data)
+}
+
+export function getAiChatMessages(conversationId) {
+  return api.get(`/ai-chat/conversations/${conversationId}/messages`).then((res) => res.data)
+}
+
+export function deleteAiChatConversation(conversationId) {
+  return api.delete(`/ai-chat/conversations/${conversationId}`).then((res) => res.data)
+}
+
 export function getAdminUsers(role) {
   return api.get('/admin/users', { params: { role } }).then((res) => res.data)
 }

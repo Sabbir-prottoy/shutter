@@ -25,9 +25,8 @@ const adminLinkClass = ({ isActive }) =>
 const loginLinkClass = ({ isActive }) =>
   `${linkBase} text-blue-600 underline-offset-2 hover:text-blue-700 hover:underline active:animate-nav-flash ${isActive ? 'underline' : ''}`
 
-// Not routes — these just open the floating widgets mounted at the app root
-// (see ChatWidget/VoiceAgent's "open-*" event listeners), so plain buttons
-// rather than NavLinks.
+// The two AI entries are their own pages (/speak and /chat). The floating
+// widgets still exist and are opened from their own buttons at the corner.
 const aiActionClass = `${linkBase} text-blue-600 underline-offset-2 hover:text-blue-700 hover:underline active:animate-nav-wiggle`
 
 const ctaButtonClass =
@@ -94,21 +93,17 @@ export default function Navbar() {
               <AiSparkIcon className="h-5 w-5" />
             </button>
 
-            <button
-              type="button"
-              className={aiActionClass}
-              onClick={() => window.dispatchEvent(new CustomEvent('open-voice-agent'))}
-            >
+            {/* Opens the full spoken-chat page rather than the floating
+                widget, which is still reachable from its own button. */}
+            <NavLink to="/speak" className={aiActionClass}>
               Speak with AI
-            </button>
+            </NavLink>
 
-            <button
-              type="button"
-              className={aiActionClass}
-              onClick={() => window.dispatchEvent(new CustomEvent('open-chat-widget'))}
-            >
+            {/* Opens the full chat page rather than the floating widget — the
+                widget is still reachable from its own button. */}
+            <NavLink to="/chat" className={aiActionClass}>
               Chat with AI
-            </button>
+            </NavLink>
 
             <NavLink to="/entertainment" className={entertainmentLinkClass}>
               Entertainment
