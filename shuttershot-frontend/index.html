@@ -10,6 +10,21 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300..900&family=Work+Sans:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
+    <script>
+      // Applies the saved theme before the first paint. Without this the page
+      // renders light and then snaps to dark once React mounts, which is a
+      // visible flash on every single load for dark-mode users.
+      (function () {
+        try {
+          var saved = localStorage.getItem('shuttershot-theme')
+          if (saved === 'dark' || saved === 'light') {
+            document.documentElement.dataset.theme = saved
+          }
+        } catch (error) {
+          /* localStorage can be blocked; the app just defaults to light. */
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

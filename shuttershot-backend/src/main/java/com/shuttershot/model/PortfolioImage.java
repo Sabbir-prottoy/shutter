@@ -62,7 +62,33 @@ public class PortfolioImage {
     @Column(name = "flag_reason")
     private String flagReason;
 
-    // Populated only once an admin clicks "Check for AI" (PortfolioService.checkForAi)
+    // Shown to the photographer on their own portfolio page when a photo is
+    // rejected. Kept separate from flagReason, which is an admin-facing note
+    // and is worded for whoever is moderating, not for the photographer.
+    @Column(name = "rejection_reason", columnDefinition = "TEXT")
+    private String rejectionReason;
+
+    // Fingerprints used to spot re-uploads of pictures already on ShutterShot
+    // — see ImageFingerprintService. Null on rows that predate the check.
+    @Column(name = "content_hash", length = 64)
+    private String contentHash;
+
+    @Column(name = "perceptual_hash")
+    private Long perceptualHash;
+
+    // Detectra v3's automatic screening, run locally on every upload and what
+    // decides the initial approve/reject — see DetectraAiDetectionService.
+    // Null only when the model was unavailable and the photo awaits manual review.
+    @Column(name = "detectra_verdict")
+    private String detectraVerdict;
+
+    @Column(name = "detectra_confidence")
+    private Double detectraConfidence;
+
+    @Column(name = "detectra_checked_at")
+    private LocalDateTime detectraCheckedAt;
+
+    // Populated only once an admin clicks "Deep Check with AI" (PortfolioService.checkForAi)
     // — null until then. See AiImageDetectionService for what populates these.
     @Column(name = "ai_check_verdict")
     private String aiCheckVerdict;

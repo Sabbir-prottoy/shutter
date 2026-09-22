@@ -1,12 +1,14 @@
 import { Link, NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import Logo from './Logo'
+import AiSparkIcon from './AiSparkIcon'
+import ThemeToggle from './ThemeToggle'
 import { triggerClickBurst } from './ClickBurstLayer'
 
 // Each interactive nav item gets its own click animation (pulse / flicker /
 // wiggle / bounce / flash / glow) rather than one effect copy-pasted
 // everywhere, so clicking around the header doesn't feel repetitive.
-const linkBase = 'inline-block text-sm font-medium transition-colors'
+const linkBase = 'inline-block whitespace-nowrap text-base font-medium transition-colors'
 
 const entertainmentLinkClass = ({ isActive }) =>
   `${linkBase} hover:text-accent active:animate-nav-pulse ${isActive ? 'text-accent' : 'text-ink-muted'}`
@@ -29,7 +31,7 @@ const loginLinkClass = ({ isActive }) =>
 const aiActionClass = `${linkBase} text-blue-600 underline-offset-2 hover:text-blue-700 hover:underline active:animate-nav-wiggle`
 
 const ctaButtonClass =
-  'rounded-card bg-accent-gradient px-3 py-2 text-sm font-medium text-white shadow-card transition-shadow hover:shadow-hover active:animate-nav-bounce sm:px-4'
+  'whitespace-nowrap rounded-card bg-accent-gradient px-3 py-1.5 text-base font-medium text-white shadow-card transition-shadow hover:shadow-hover active:animate-nav-bounce'
 
 function ownAreaFor(role) {
   if (role === 'ADMIN' || role === 'MODERATOR') return '/admin'
@@ -58,71 +60,93 @@ export default function Navbar() {
   const { isAuthenticated, user } = useAuth()
 
   return (
-    <header className="border-b border-border">
+    <header className="sticky top-0 z-40 px-4 pt-4 sm:px-[30px]">
+      {/* Brand and theme toggle sit outside the pill, at the two ends of the
+          row. Laid out with flexbox rather than pinned to the corners, so the
+          pill can never grow into either of them at any width. The toggle's
+          centre lands 52px from the right edge, lining it up with the chat
+          and voice buttons in the bottom-right corner. */}
       <div
         onClick={handleHeaderClick}
-        className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-2 px-4 py-4 sm:px-6 sm:py-5"
+        className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2"
       >
         <Link
           to="/"
-          className="inline-flex items-center gap-2 font-display text-xl font-bold text-ink active:animate-nav-bounce"
+          className="inline-flex shrink-0 items-center gap-2.5 whitespace-nowrap font-display text-3xl font-bold text-ink active:animate-nav-bounce"
         >
-          <Logo className="h-8 w-8 shrink-0" />
+          <Logo className="h-12 w-12 shrink-0" />
           ShutterShot
         </Link>
 
-        <nav className="flex flex-wrap items-center justify-end gap-x-2 gap-y-2 sm:gap-x-4">
-          <button
-            type="button"
-            className={aiActionClass}
-            onClick={() => window.dispatchEvent(new CustomEvent('open-voice-agent'))}
-          >
-            Speak with AI
-          </button>
-
-          <button
-            type="button"
-            className={aiActionClass}
-            onClick={() => window.dispatchEvent(new CustomEvent('open-chat-widget'))}
-          >
-            Chat with AI
-          </button>
-
-          <NavLink to="/entertainment" className={entertainmentLinkClass}>
-            Entertainment
-          </NavLink>
-
-          <span className="hidden sm:inline">
-            <NavLink to="/search" className={findLinkClass}>
-              Find a photographer
-            </NavLink>
-          </span>
-
-          <NavLink to="/faq" className={faqLinkClass}>
-            FAQs
-          </NavLink>
-
-          {isAuthenticated ? (
-            <Link
-              to={ownAreaFor(user?.role)}
-              className="rounded-card bg-accent-gradient px-3 py-2 text-sm font-medium text-white shadow-card transition-shadow hover:shadow-hover active:animate-nav-glow sm:px-4"
+        {/* Deliberately not forced to a single line: each label already has
+            whitespace-nowrap so nothing breaks mid-phrase, and letting the row
+            wrap when it genuinely runs out of width fails far better than
+            nowrap, which would push the links outside the capsule. */}
+        <nav className="flex min-w-0 flex-wrap items-center justify-end gap-x-2 gap-y-1.5 rounded-full border border-border bg-surface/90 px-4 py-2.5 shadow-hover backdrop-blur sm:gap-x-2.5">
+            {/* A button rather than a bare svg so the header's click-burst
+                delegation (which matches `a, button`) picks it up. */}
+            <button
+              type="button"
+              aria-label="AI features"
+              title="AI features"
+              className="inline-flex shrink-0 items-center rounded-full transition-transform hover:scale-110 active:animate-nav-pulse"
             >
-              {ownAreaLabel(user?.role)}
-            </Link>
-          ) : (
-            <>
-              <NavLink to="/admin/login" className={adminLinkClass}>
-                Admin portal
+              <AiSparkIcon className="h-5 w-5" />
+            </button>
+
+            <button
+              type="button"
+              className={aiActionClass}
+              onClick={() => window.dispatchEvent(new CustomEvent('open-voice-agent'))}
+            >
+              Speak with AI
+            </button>
+
+            <button
+              type="button"
+              className={aiActionClass}
+              onClick={() => window.dispatchEvent(new CustomEvent('open-chat-widget'))}
+            >
+              Chat with AI
+            </button>
+
+            <NavLink to="/entertainment" className={entertainmentLinkClass}>
+              Entertainment
+            </NavLink>
+
+            <span className="hidden sm:inline">
+              <NavLink to="/search" className={findLinkClass}>
+                Find a photographer
               </NavLink>
-              <Link to="/register" className={ctaButtonClass}>
-                Join<span className="hidden sm:inline"> as photographer</span>
+            </span>
+
+            <NavLink to="/faq" className={faqLinkClass}>
+              FAQs
+            </NavLink>
+
+            {isAuthenticated ? (
+              <Link
+                to={ownAreaFor(user?.role)}
+                className="rounded-card bg-accent-gradient px-3 py-1.5 text-base font-medium text-white shadow-card transition-shadow hover:shadow-hover active:animate-nav-glow"
+              >
+                {ownAreaLabel(user?.role)}
               </Link>
-              <NavLink to="/login" className={loginLinkClass}>
-                Log in
-              </NavLink>
-            </>
-          )}
+            ) : (
+              <>
+                <NavLink to="/admin/login" className={adminLinkClass}>
+                  Admin portal
+                </NavLink>
+                <Link to="/register" className={ctaButtonClass}>
+                  Join<span className="hidden sm:inline"> as photographer</span>
+                </Link>
+                <NavLink to="/login" className={loginLinkClass}>
+                  Log in
+                </NavLink>
+              </>
+            )}
         </nav>
+
+        <ThemeToggle className="h-11 w-11 bg-surface/90 shadow-card backdrop-blur" />
       </div>
     </header>
   )

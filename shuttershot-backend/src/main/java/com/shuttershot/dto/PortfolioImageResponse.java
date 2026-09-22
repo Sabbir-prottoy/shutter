@@ -26,7 +26,15 @@ public class PortfolioImageResponse {
     private VerificationStatus verificationStatus;
     private String flagReason;
 
-    // Null until an admin runs the AI check (PortfolioService.checkForAi).
+    // Photographer-facing explanation, set whenever a photo is rejected.
+    private String rejectionReason;
+
+    // Detectra v3's automatic screening at upload time.
+    private String detectraVerdict;
+    private Double detectraConfidence;
+    private LocalDateTime detectraCheckedAt;
+
+    // Null until an admin runs the deep AI check (PortfolioService.checkForAi).
     private String aiCheckVerdict;
     private Double aiCheckConfidence;
     private String aiCheckGenerator;

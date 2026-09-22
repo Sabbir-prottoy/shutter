@@ -38,7 +38,7 @@ export default function Camera3D({ className = '' }) {
       {/* Soft contact shadow, grounding the card in place */}
       <div
         aria-hidden="true"
-        className="absolute bottom-1 left-1/2 h-4 w-2/3 -translate-x-1/2 rounded-full bg-ink/25 blur-md"
+        className="absolute bottom-1 left-1/2 h-4 w-2/3 -translate-x-1/2 rounded-full bg-scrim/25 blur-md"
       />
 
       {/* Idle wander — always slowly turning on its own; paused while the

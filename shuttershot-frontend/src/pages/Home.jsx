@@ -86,6 +86,10 @@ const steps = [
   },
 ]
 
+// One accent color per step badge (peach / green / lavender), matching the
+// reference layout's three distinct circle colors rather than one repeated hue.
+const STEP_BADGE_STYLES = ['bg-accent/15 text-accent', 'bg-free/15 text-free', 'bg-[#ece7fb] text-[#8874c9]']
+
 export default function Home() {
   const [photographers, setPhotographers] = useState([])
   const [status, setStatus] = useState('loading')
@@ -127,45 +131,100 @@ export default function Home() {
   }, [])
 
   return (
-    <div className="flex min-h-screen flex-col overflow-x-hidden bg-canvas">
+    <div className="flex min-h-screen flex-col overflow-x-clip bg-canvas">
       <Navbar />
 
-      <section className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6 py-16 sm:px-12">
-        <div className="w-full">
-          <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-4">
-            <h1 className="font-display text-4xl font-black leading-[1.05] text-ink sm:text-5xl lg:text-6xl">
-              Find your
-              <br />
-              photographer.
-            </h1>
-            <Camera3D className="mt-6 hidden shrink-0 sm:block" />
-          </div>
-
-          <div className="mt-5 flex items-center gap-3">
-            <span
-              className="h-1.5 w-20 rounded-full bg-[length:200%_100%] animate-gradient-flow"
-              style={{
-                backgroundImage:
-                  'linear-gradient(90deg, #c15a3a, #e8b34f, #8db5a0, #6d8fd6, #e0729a, #c15a3a)',
-              }}
-            />
-            <div className="flex items-center gap-1.5">
-              {['#c15a3a', '#e8b34f', '#8db5a0', '#6d8fd6', '#e0729a'].map((color, index) => (
+      {status === 'ready' && photographers.length > 0 && (
+        <div className="mx-auto mt-6 w-full max-w-6xl px-6 sm:px-12">
+          <div className="inline-flex items-center gap-2 rounded-full bg-free/15 py-1.5 pl-1.5 pr-3">
+            <div className="flex -space-x-2">
+              {photographers.slice(0, 3).map((photographer, index) => (
                 <span
-                  key={color}
-                  className="h-2.5 w-2.5 rounded-full animate-dot-bounce"
-                  style={{ backgroundColor: color, animationDelay: `${index * 0.12}s` }}
-                />
+                  key={photographer.id}
+                  className="flex h-6 w-6 items-center justify-center rounded-full border-2 border-surface text-[10px] font-semibold text-white"
+                  style={{ backgroundColor: ['#c15a3a', '#e8b34f', '#6d8fd6'][index] }}
+                >
+                  {photographer.name?.charAt(0) || '?'}
+                </span>
               ))}
             </div>
+            <span className="text-sm font-medium text-free">
+              {photographers.length}+ photographers joined
+            </span>
           </div>
+        </div>
+      )}
 
-          <p className="mt-4 max-w-md text-lg text-ink-muted">
-            Browse verified local photographers, check live availability, and book your
-            session — no account required.
-          </p>
+      <section className="mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-6 pb-16 pt-10 sm:px-12">
+        <div className="w-full">
+          <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-4">
+            <div className="min-w-0 flex-1">
+              <h1 className="font-display text-4xl font-black leading-[1.05] text-ink sm:text-5xl lg:text-6xl">
+                Find your
+                <br />
+                photographer..
+              </h1>
 
-          <SearchBar className="mt-8 max-w-lg" />
+              <div className="mt-16 flex items-center gap-3">
+                <span
+                  className="h-1.5 w-20 rounded-full bg-[length:200%_100%] animate-gradient-flow"
+                  style={{
+                    backgroundImage:
+                      'linear-gradient(90deg, #c15a3a, #e8b34f, #8db5a0, #6d8fd6, #e0729a, #c15a3a)',
+                  }}
+                />
+                <div className="flex items-center gap-1.5">
+                  {['#c15a3a', '#e8b34f', '#8db5a0', '#6d8fd6', '#e0729a'].map((color, index) => (
+                    <span
+                      key={color}
+                      className="h-2.5 w-2.5 rounded-full animate-dot-bounce"
+                      style={{ backgroundColor: color, animationDelay: `${index * 0.12}s` }}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <p className="mt-4 max-w-md text-lg text-ink-muted">
+                Browse verified local photographers, check live availability, and book your
+                session — no account required.
+              </p>
+
+              {status === 'ready' && (
+                <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink-muted">
+                  <span className="flex items-center gap-2">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15">
+                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-accent" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m5 13 4 4L19 7" />
+                      </svg>
+                    </span>
+                    Verified profiles
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15">
+                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-accent" fill="currentColor">
+                        <path d="M12 2.5l2.9 6.4 6.9.7-5.2 4.8 1.5 6.9L12 17.9l-6.1 3.4 1.5-6.9-5.2-4.8 6.9-.7z" />
+                      </svg>
+                    </span>
+                    {/* Fixed placeholder — no photographer has a real review yet to average. */}
+                    4.9 avg rating
+                  </span>
+                  <span className="flex items-center gap-2">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent/15">
+                      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 text-accent" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none" />
+                      </svg>
+                    </span>
+                    Free to browse
+                  </span>
+                </div>
+              )}
+
+              <SearchBar className="mt-8 w-full max-w-5xl" />
+            </div>
+
+            <Camera3D className="mt-6 hidden shrink-0 sm:block" />
+          </div>
 
           <div className="mt-12 grid grid-cols-1 items-center gap-10 lg:grid-cols-2">
             <div className="max-w-lg">
@@ -200,7 +259,20 @@ export default function Home() {
       </section>
 
       <section className="mx-auto w-full max-w-6xl px-6 py-16 sm:px-12">
-        <h2 className="font-display text-3xl font-bold text-ink sm:text-4xl">How it works</h2>
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-ink-muted">Process</p>
+            <h2 className="mt-3 font-display text-4xl font-bold leading-[1.1] text-ink sm:text-5xl">
+              Three steps,
+              <br />
+              one <span className="italic text-accent">session.</span>
+            </h2>
+          </div>
+          <p className="max-w-sm text-ink-muted sm:text-right">
+            Browse verified photographers, book a package, and confirm your spot — no
+            back-and-forth messages.
+          </p>
+        </div>
 
         <div className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-3">
           {steps.map((step, index) => (
@@ -208,7 +280,9 @@ export default function Home() {
               key={step.title}
               className="group rounded-card border border-border bg-surface p-6 shadow-card transition-all duration-300 hover:-translate-y-1 hover:shadow-hover"
             >
-              <span className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-accent-gradient font-display text-lg font-bold text-white transition-transform duration-300 group-hover:scale-110">
+              <span
+                className={`inline-flex h-10 w-10 items-center justify-center rounded-full font-display text-lg font-bold transition-transform duration-300 group-hover:scale-110 ${STEP_BADGE_STYLES[index]}`}
+              >
                 {index + 1}
               </span>
               <h3 className="mt-4 font-display text-xl font-bold text-ink">{step.title}</h3>
@@ -291,20 +365,43 @@ export default function Home() {
       </section>
 
       <section className="mx-auto w-full max-w-6xl px-6 pb-20 sm:px-12">
-        <div className="flex flex-col items-start gap-6 rounded-card bg-accent-gradient px-8 py-12 text-white shadow-hover sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="font-display text-2xl font-bold sm:text-3xl">Are you a photographer?</h2>
-            <p className="mt-2 max-w-md text-white/90">
+        <div className="flex flex-col items-center gap-10 rounded-card bg-accent/15 px-8 py-12 sm:px-12 lg:flex-row lg:justify-between">
+          <div className="max-w-xl">
+            <p className="text-sm font-semibold uppercase tracking-widest text-accent">
+              For photographers
+            </p>
+            <h2 className="mt-3 font-display text-4xl font-bold leading-[1.05] text-ink sm:text-5xl">
+              Turn your lens into a <span className="italic text-accent">living.</span>
+            </h2>
+            <p className="mt-4 max-w-md text-ink-muted">
               List your packages, manage your calendar, and get discovered by clients near
               you.
             </p>
+
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <Link
+                to="/register"
+                className="inline-flex items-center gap-2 rounded-card bg-ink px-6 py-3 font-medium text-surface shadow-card transition-transform duration-200 hover:-translate-y-0.5 active:animate-nav-bounce"
+              >
+                Join as photographer
+                <span aria-hidden="true">&rarr;</span>
+              </Link>
+              <Link
+                to="/faq"
+                className="rounded-card border border-ink/20 px-6 py-3 font-medium text-ink transition-colors hover:bg-surface"
+              >
+                Learn more
+              </Link>
+            </div>
           </div>
-          <Link
-            to="/register"
-            className="shrink-0 rounded-card bg-white px-6 py-3 font-medium text-ink shadow-card transition-transform duration-200 hover:-translate-y-0.5 active:animate-nav-bounce"
-          >
-            Join as photographer
-          </Link>
+
+          <div className="w-full max-w-sm shrink-0 rounded-card bg-surface p-4 shadow-card">
+            <img
+              src="/camera/camera-2.jpg"
+              alt="A camera, ready for a shoot"
+              className="h-auto w-full rounded-card object-cover"
+            />
+          </div>
         </div>
       </section>
 

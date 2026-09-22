@@ -80,6 +80,11 @@ export default function PortfolioManager() {
     [images],
   )
 
+  const rejectedImages = useMemo(
+    () => images.filter((image) => image.verificationStatus === 'FLAGGED'),
+    [images],
+  )
+
   const confirmDeleteImage = liveImages.find((image) => image.id === confirmDeleteId)
 
   return (
@@ -87,10 +92,10 @@ export default function PortfolioManager() {
       <div>
         <h1 className="font-display text-2xl font-bold text-ink">Portfolio manager</h1>
         <p className="mt-1 text-ink-muted">
-          New uploads don't go live right away — an admin reviews every photo first to confirm
-          it's genuinely your own work, not AI-generated or someone else's picture. Track
-          pending uploads in the sidebar; approved photos show up below and on your public
-          profile.
+          Every upload is checked automatically before it goes live: we screen it for
+          AI-generated imagery and for pictures already published elsewhere on ShutterShot.
+          Photos that pass appear below and on your public profile straight away. Anything
+          rejected is listed further down with the reason why.
         </p>
       </div>
 
@@ -206,8 +211,48 @@ export default function PortfolioManager() {
         </div>
       )}
 
+      {status === 'ready' && rejectedImages.length > 0 && (
+        <section className="space-y-4">
+          <div>
+            <h2 className="font-display text-xl font-bold text-ink">
+              Not published ({rejectedImages.length})
+            </h2>
+            <p className="mt-1 text-sm text-ink-muted">
+              These photos were rejected, so they aren't on your public profile. If you think a
+              decision is wrong, contact support and an admin will review it again.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {rejectedImages.map((image) => (
+              <div key={image.id} className="rounded-card bg-surface shadow-card">
+                <div className="relative">
+                  <img
+                    src={image.imageUrl}
+                    alt={image.caption || image.category}
+                    className="aspect-[4/3] w-full rounded-t-card object-cover opacity-60 grayscale"
+                  />
+                  <span className="absolute right-2 top-2 rounded-full bg-booked px-2.5 py-0.5 text-xs font-medium text-surface">
+                    Rejected
+                  </span>
+                </div>
+                <div className="p-4">
+                  <p className="text-sm font-medium text-ink">
+                    {image.caption || image.category.charAt(0) + image.category.slice(1).toLowerCase()}
+                  </p>
+                  <p className="mt-2 rounded-card border border-booked/30 bg-booked/10 px-3 py-2 text-sm text-booked">
+                    {image.rejectionReason ||
+                      'This photo was rejected during review. Contact support if you think that was a mistake.'}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
       {confirmDeleteImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/40 p-4">
           <div className="w-full max-w-sm rounded-card bg-surface p-6 shadow-hover">
             <h3 className="font-display text-lg font-bold text-ink">Delete this photo?</h3>
             <p className="mt-2 text-sm text-ink-muted">
@@ -227,7 +272,7 @@ export default function PortfolioManager() {
                 type="button"
                 onClick={handleConfirmDelete}
                 disabled={deletingId === confirmDeleteId}
-                className="rounded-card bg-booked px-4 py-2 text-sm font-medium text-white shadow-card transition-opacity hover:opacity-90 disabled:opacity-60"
+                className="rounded-card bg-booked px-4 py-2 text-sm font-medium text-surface shadow-card transition-opacity hover:opacity-90 disabled:opacity-60"
               >
                 {deletingId === confirmDeleteId ? 'Deleting…' : 'Delete permanently'}
               </button>

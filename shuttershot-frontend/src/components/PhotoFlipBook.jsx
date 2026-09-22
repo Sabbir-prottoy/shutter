@@ -142,7 +142,7 @@ export default function PhotoFlipBook({ images, effects = EFFECTS }) {
           className="absolute inset-0 h-full w-full rounded-card border border-border object-cover shadow-hover [backface-visibility:hidden]"
         />
         {front.category && (
-          <span className="absolute bottom-3 left-3 rounded-full bg-ink/70 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
+          <span className="absolute bottom-3 left-3 rounded-full bg-scrim/70 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
             {front.category}
           </span>
         )}

@@ -2,6 +2,7 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { MAIN_ADMIN_EMAIL } from '../constants'
 import Footer from './Footer'
+import ThemeToggle from './ThemeToggle'
 
 // Overview is a read-only dashboard — kept at the top of the sidebar, but
 // still open to any ADMIN/MODERATOR like the other day-to-day tools below it.
@@ -75,13 +76,16 @@ export default function AdminLayout() {
                 {user?.role === 'MODERATOR' ? 'Moderator' : 'Admin'}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={logout}
-              className="text-sm text-ink-muted underline transition-colors hover:text-accent"
-            >
-              Log out
-            </button>
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <button
+                type="button"
+                onClick={logout}
+                className="text-sm text-ink-muted underline transition-colors hover:text-accent"
+              >
+                Log out
+              </button>
+            </div>
           </div>
           <nav className="mt-3 flex gap-4 overflow-x-auto pb-1">
             {navItems.map((item) => (
@@ -92,7 +96,13 @@ export default function AdminLayout() {
           </nav>
         </div>
 
-        <main className="flex-1 p-6 sm:p-10">
+        {/* Desktop has no top bar of its own, so this carries the theme
+            toggle in the content area's top-right corner. */}
+        <div className="hidden justify-end px-10 pt-6 sm:flex">
+          <ThemeToggle />
+        </div>
+
+        <main className="flex-1 p-6 sm:px-10 sm:pb-10 sm:pt-4">
           <Outlet />
         </main>
 

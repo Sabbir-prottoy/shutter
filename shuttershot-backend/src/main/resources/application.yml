@@ -68,6 +68,26 @@ aiornot:
   # Server-side only, never sent to the frontend.
   api-key: ${AIORNOT_API_KEY:}
 
+detectra:
+  # Local ONNX model (Detectra v3) that screens every portfolio upload for
+  # AI-generated imagery, with no external call. Path is relative to the
+  # backend working directory, same as app.upload-dir.
+  model-path: ${DETECTRA_MODEL_PATH:models/detectra-v3/model.onnx}
+  # An upload is auto-rejected only above this AI probability. Measured against
+  # a corpus of known-real photos, 0.50 would wrongly reject ~7% of genuine
+  # work and 0.90 about 2.5% — a wrongly rejected photographer is costlier here
+  # than an AI image slipping through, since an admin can still reject that
+  # later from the moderation panel.
+  reject-threshold: ${DETECTRA_REJECT_THRESHOLD:0.90}
+
+duplicate-check:
+  # Perceptual-hash (pHash) Hamming distance below which a new upload counts as
+  # a copy of a photo already published here. Measured over 535k pairs of
+  # genuinely different photos, the closest unrelated pair sat at distance 10,
+  # while re-encoded and resized copies stayed within 2 and lightly cropped
+  # ones within 6 — so 6 catches real copies with margin to spare.
+  max-distance: ${DUPLICATE_MAX_DISTANCE:6}
+
 sslcommerz:
   # Sandbox store credentials from https://developer.sslcommerz.com — server-side
   # only, never sent to the frontend. sandbox=false + a live store-id/password

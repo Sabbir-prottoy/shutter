@@ -3,6 +3,7 @@ import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getMyPortfolio, getMyProfile } from '../services/api'
 import Footer from './Footer'
+import ThemeToggle from './ThemeToggle'
 
 // How often the sidebar's pending-approval count refreshes on its own —
 // frequent enough to notice an admin decision without a manual reload,
@@ -151,13 +152,16 @@ export default function DashboardLayout() {
             <Link to="/" className="font-display text-lg font-bold text-ink">
               ShutterShot
             </Link>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="text-sm text-ink-muted underline transition-colors hover:text-accent"
-            >
-              Log out
-            </button>
+            <div className="flex items-center gap-3">
+              <ThemeToggle />
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="text-sm text-ink-muted underline transition-colors hover:text-accent"
+              >
+                Log out
+              </button>
+            </div>
           </div>
           <nav className="mt-3 flex gap-4 overflow-x-auto pb-1">
             {NAV_ITEMS.map((item) => (
@@ -168,7 +172,13 @@ export default function DashboardLayout() {
           </nav>
         </div>
 
-        <main className="flex-1 p-6 sm:p-10">
+        {/* Desktop has no top bar of its own, so this carries the theme
+            toggle in the content area's top-right corner. */}
+        <div className="hidden justify-end px-10 pt-6 sm:flex">
+          <ThemeToggle />
+        </div>
+
+        <main className="flex-1 p-6 sm:px-10 sm:pb-10 sm:pt-4">
           <Outlet />
         </main>
 

@@ -207,8 +207,8 @@ export function rejectReview(id) {
   return api.put(`/admin/reviews/${id}/reject`).then((res) => res.data)
 }
 
-export function getPendingPhotos() {
-  return api.get('/admin/photos/pending').then((res) => res.data)
+export function getModerationPhotos(status) {
+  return api.get('/admin/photos', { params: { status } }).then((res) => res.data)
 }
 
 export function approvePhoto(id) {

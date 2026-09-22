@@ -42,7 +42,7 @@ export default function ProfilePhotoUploader({ photoUrl, onUpload, size = 'h-24 
           <img src={photoUrl} alt="Profile" className="h-full w-full object-cover" />
         )}
 
-        <span className="absolute inset-0 flex items-center justify-center bg-ink/0 text-2xl font-light text-white opacity-0 transition-all duration-200 group-hover:bg-ink/50 group-hover:opacity-100">
+        <span className="absolute inset-0 flex items-center justify-center bg-scrim/0 text-2xl font-light text-white opacity-0 transition-all duration-200 group-hover:bg-scrim/50 group-hover:opacity-100">
           {uploading ? '…' : '+'}
         </span>
       </button>

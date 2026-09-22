@@ -19,6 +19,17 @@
   --color-booked: #c47a6e;
   --color-border: #e8e2d9;
 
+  /* Deliberately dark in BOTH themes: modal backdrops, the shadow under the
+     3D camera, and captions that sit on top of a photo. These read against
+     the content beneath them, not against the page, so flipping them with
+     the theme would wash them out. */
+  --color-scrim: #1e1b16;
+
+  /* Page background. Kept as tokens so the dark theme can restyle the
+     gradient without the .bg-canvas rule having to know about themes. */
+  --canvas-from: #fbf7f0;
+  --canvas-to: #f5eee6;
+
   --font-display: "Fraunces", Georgia, serif;
   --font-sans: "Work Sans", system-ui, sans-serif;
 
@@ -137,21 +148,65 @@
   color-scheme: light;
 }
 
+/*
+  Dark theme.
+
+  Every colour in the app already goes through the tokens above, so the theme
+  is expressed purely as a re-definition of those tokens — no component needs
+  to know a dark mode exists. Written unlayered and with a two-class
+  specificity so it reliably beats Tailwind's `@theme` output in `:root`.
+
+  The palette is warm espresso rather than neutral grey: the light theme is
+  built on cream and terracotta, and a cold grey dark mode would read as a
+  different product. Accent, free and booked are all lightened, because the
+  light-theme values are tuned for contrast against white and would fail
+  against a dark surface.
+*/
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-surface: #221e19;
+  --color-surface-raised: #2b2620;
+  --color-ink: #f3efe8;
+  --color-ink-muted: #a89f92;
+  --color-accent: #e2865c;
+  --color-accent-light: #eda37e;
+  --color-free: #8fc0a9;
+  --color-booked: #e08d7d;
+  --color-border: #3a3229;
+
+  /* Pushed darker than the light-theme scrim so overlays still separate a
+     modal from an already-dark page. */
+  --color-scrim: #080705;
+
+  --canvas-from: #15120e;
+  --canvas-to: #1b1713;
+
+  /* A 4%-black shadow is invisible on a dark surface; depth here has to come
+     from a much heavier shadow plus the lighter raised surfaces above. */
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.45);
+  --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.6);
+}
+
 body {
   font-family: var(--font-sans);
   color: var(--color-ink);
   /* Safety net: a component that doesn't shrink at narrow widths should
      wrap or get clipped locally, never push the whole page into horizontal
-     scroll (mobile-first per the design system, section 6). */
-  overflow-x: hidden;
-  background: linear-gradient(145deg, #fbf7f0 0%, #f5eee6 100%);
+     scroll (mobile-first per the design system, section 6). `clip` rather
+     than `hidden` — `overflow-x: hidden` on an ancestor silently breaks
+     `position: sticky` on every descendant (the navbar included), because
+     it turns this element into a scroll container of its own; `clip` blocks
+     the same horizontal overflow without that side effect. */
+  overflow-x: clip;
+  background: linear-gradient(145deg, var(--canvas-from) 0%, var(--canvas-to) 100%);
   min-height: 100vh;
 }
 
 /* Canvas gradient + accent gradient aren't expressible as single Tailwind
    color tokens, so they're plain utility classes instead. */
 .bg-canvas {
-  background: linear-gradient(145deg, #fbf7f0 0%, #f5eee6 100%);
+  background: linear-gradient(145deg, var(--canvas-from) 0%, var(--canvas-to) 100%);
 }
 
 .bg-accent-gradient {

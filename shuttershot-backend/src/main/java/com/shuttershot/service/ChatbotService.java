@@ -120,7 +120,7 @@ public class ChatbotService {
                 sb.append("  Packages: none listed yet\n");
             } else {
                 for (PackageResponse pkg : packages) {
-                    sb.append("  Package: \"").append(pkg.getTitle()).append("\" — $")
+                    sb.append("  Package: \"").append(pkg.getTitle()).append("\" — BDT ")
                             .append(pkg.getPrice())
                             .append(" (").append(pkg.getDurationHours()).append("h session, delivered in ")
                             .append(pkg.getDeliveryDays()).append(" days)\n");

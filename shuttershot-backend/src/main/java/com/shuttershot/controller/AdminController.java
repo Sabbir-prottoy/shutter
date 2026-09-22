@@ -10,6 +10,7 @@ import com.shuttershot.dto.ReviewResponse;
 import com.shuttershot.dto.StaffAccountResponse;
 import com.shuttershot.dto.UpdateBlueBadgeSettingsRequest;
 import com.shuttershot.model.Role;
+import com.shuttershot.model.VerificationStatus;
 import com.shuttershot.service.AdminUserService;
 import com.shuttershot.service.BlueBadgeService;
 import com.shuttershot.service.PortfolioService;
@@ -59,9 +60,10 @@ public class AdminController {
         return ResponseEntity.ok(reviewService.reject(id));
     }
 
-    @GetMapping("/photos/pending")
-    public ResponseEntity<List<PortfolioImageResponse>> pendingPhotos() {
-        return ResponseEntity.ok(portfolioService.listPending());
+    @GetMapping("/photos")
+    public ResponseEntity<List<PortfolioImageResponse>> photos(
+            @RequestParam(required = false) VerificationStatus status) {
+        return ResponseEntity.ok(portfolioService.listForModeration(status));
     }
 
     @PutMapping("/photos/{id}/approve")
@@ -70,9 +72,8 @@ public class AdminController {
     }
 
     @PutMapping("/photos/{id}/reject")
-    public ResponseEntity<Void> rejectPhoto(@PathVariable Long id) {
-        portfolioService.rejectByAdmin(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<PortfolioImageResponse> rejectPhoto(@PathVariable Long id) {
+        return ResponseEntity.ok(portfolioService.rejectByAdmin(id));
     }
 
     @PostMapping("/photos/{id}/ai-check")

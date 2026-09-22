@@ -84,10 +84,10 @@ export default function BarChart({ title, data, color, valueFormatter = (v) => v
                   x2={WIDTH - PADDING_RIGHT}
                   y1={y}
                   y2={y}
-                  stroke="#e8e2d9"
+                  stroke="var(--color-border)"
                   strokeWidth="1"
                 />
-                <text x={PADDING_LEFT - 8} y={y + 3} textAnchor="end" fontSize="10" fill="#7a7267">
+                <text x={PADDING_LEFT - 8} y={y + 3} textAnchor="end" fontSize="10" fill="var(--color-ink-muted)">
                   {Math.round(tick).toLocaleString()}
                 </text>
               </g>
@@ -135,7 +135,7 @@ export default function BarChart({ title, data, color, valueFormatter = (v) => v
                     textAnchor="middle"
                     fontSize="11"
                     fontWeight="600"
-                    fill="#1e1b16"
+                    fill="var(--color-ink)"
                   >
                     {valueFormatter(d.value)}
                   </text>
@@ -146,7 +146,7 @@ export default function BarChart({ title, data, color, valueFormatter = (v) => v
                   y={PADDING_TOP + plotHeight + 16}
                   textAnchor="middle"
                   fontSize="10"
-                  fill="#7a7267"
+                  fill="var(--color-ink-muted)"
                 >
                   {d.label}
                 </text>

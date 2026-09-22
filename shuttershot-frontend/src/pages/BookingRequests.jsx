@@ -123,7 +123,7 @@ export default function BookingRequests() {
       })}
 
       {qrModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-scrim/40 p-4">
           <div className="w-full max-w-sm rounded-card bg-surface p-6 shadow-hover">
             <h3 className="font-display text-lg font-bold text-ink">
               QR code for {qrModal.booking.clientName}

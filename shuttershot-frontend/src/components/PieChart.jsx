@@ -49,7 +49,7 @@ export default function PieChart({ title, data, valueFormatter = (v) => v.toLoca
         <div className="relative shrink-0">
           <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="h-40 w-40" role="img" aria-label={title}>
             {total === 0 ? (
-              <circle cx={CENTER} cy={CENTER} r={RADIUS} fill="#e8e2d9" />
+              <circle cx={CENTER} cy={CENTER} r={RADIUS} fill="var(--color-border)" />
             ) : (
               slices.map((slice, i) => (
                 <path
@@ -67,11 +67,11 @@ export default function PieChart({ title, data, valueFormatter = (v) => v.toLoca
                 />
               ))
             )}
-            <circle cx={CENTER} cy={CENTER} r={RADIUS * 0.6} fill="#fcfcfb" />
-            <text x={CENTER} y={CENTER - 4} textAnchor="middle" fontSize="20" fontWeight="700" fill="#1e1b16">
+            <circle cx={CENTER} cy={CENTER} r={RADIUS * 0.6} fill="var(--color-surface)" />
+            <text x={CENTER} y={CENTER - 4} textAnchor="middle" fontSize="20" fontWeight="700" fill="var(--color-ink)">
               {total.toLocaleString()}
             </text>
-            <text x={CENTER} y={CENTER + 14} textAnchor="middle" fontSize="10" fill="#7a7267">
+            <text x={CENTER} y={CENTER + 14} textAnchor="middle" fontSize="10" fill="var(--color-ink-muted)">
               total
             </text>
           </svg>
