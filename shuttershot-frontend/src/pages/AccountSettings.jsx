@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import ProfilePhotoUploader from '../components/ProfilePhotoUploader'
+import RatingForm from '../components/RatingForm'
 import { useAuth } from '../context/AuthContext'
 import { getMyAccount, getMyBookingsAsCustomer, updateMyAccount, uploadAccountPhoto } from '../services/api'
 
@@ -220,6 +221,7 @@ export default function AccountSettings() {
 
 function BookingDetailCard({ booking }) {
   const {
+    id: bookingId,
     photographerName,
     packageTitle,
     packagePrice,
@@ -229,7 +231,10 @@ function BookingDetailCard({ booking }) {
     otpVerified,
     depositAmount,
     depositPaid,
+    reviewed: initiallyReviewed,
   } = booking
+
+  const [reviewed, setReviewed] = useState(initiallyReviewed)
 
   return (
     <div className="rounded-card bg-surface p-5 shadow-card">
@@ -270,6 +275,23 @@ function BookingDetailCard({ booking }) {
       )}
       {bookingStatus === 'PENDING' && otpVerified && !depositPaid && (
         <p className="mt-3 text-sm text-ink-muted">Deposit payment still needed to confirm this booking.</p>
+      )}
+
+      {bookingStatus === 'COMPLETED' && (
+        <div className="mt-4 border-t border-border pt-4">
+          {reviewed ? (
+            <p className="text-sm text-ink-muted">
+              <span className="font-medium text-ink">Thanks for your feedback!</span> Your rating
+              is waiting for {photographerName} to approve it.
+            </p>
+          ) : (
+            <RatingForm
+              bookingId={bookingId}
+              photographerName={photographerName}
+              onSubmitted={() => setReviewed(true)}
+            />
+          )}
+        </div>
       )}
     </div>
   )

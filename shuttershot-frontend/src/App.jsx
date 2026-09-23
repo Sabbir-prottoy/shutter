@@ -13,6 +13,7 @@ import ProfileSettings from './pages/ProfileSettings'
 import CalendarManager from './pages/CalendarManager'
 import PackageManager from './pages/PackageManager'
 import BookingRequests from './pages/BookingRequests'
+import FeedbackManager from './pages/FeedbackManager'
 import VerifiedBadge from './pages/VerifiedBadge'
 import AdminPanel from './pages/AdminPanel/AdminPanel'
 import Overview from './pages/AdminPanel/Overview'
@@ -72,6 +73,7 @@ export default function App() {
             <Route path="/dashboard/calendar" element={<CalendarManager />} />
             <Route path="/dashboard/packages" element={<PackageManager />} />
             <Route path="/dashboard/bookings" element={<BookingRequests />} />
+            <Route path="/dashboard/reviews" element={<FeedbackManager />} />
             <Route path="/dashboard/profile" element={<ProfileSettings />} />
             <Route path="/dashboard/verified-badge" element={<VerifiedBadge />} />
           </Route>

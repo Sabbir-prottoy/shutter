@@ -22,6 +22,7 @@ import com.shuttershot.repository.BookingPaymentTransactionRepository;
 import com.shuttershot.repository.BookingRepository;
 import com.shuttershot.repository.PackageRepository;
 import com.shuttershot.repository.PhotographerProfileRepository;
+import com.shuttershot.repository.ReviewRepository;
 import com.shuttershot.repository.UserRepository;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 import com.warrenstrange.googleauth.GoogleAuthenticatorKey;
@@ -39,7 +40,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -59,6 +62,7 @@ public class BookingService {
     private final QrCodeService qrCodeService;
     private final BookingPaymentTransactionRepository bookingPaymentTransactionRepository;
     private final SSLCommerzService sslCommerzService;
+    private final ReviewRepository reviewRepository;
 
     @Value("${app.base-url}")
     private String backendBaseUrl;
@@ -351,15 +355,24 @@ public class BookingService {
             throw new AccessDeniedException("You can only view your own bookings");
         }
 
-        return bookingRepository.findByPhotographerId(photographerId).stream()
-                .map(this::toResponse)
-                .toList();
+        return toResponseList(bookingRepository.findByPhotographerId(photographerId));
     }
 
     @Transactional(readOnly = true)
     public List<BookingResponse> listByCustomer(Long customerUserId) {
-        return bookingRepository.findByCustomerIdOrderByBookingDateDesc(customerUserId).stream()
-                .map(this::toResponse)
+        return toResponseList(bookingRepository.findByCustomerIdOrderByBookingDateDesc(customerUserId));
+    }
+
+    // Looks up which of these bookings already have a review in a single query,
+    // rather than one existsByBookingId call per booking in the stream below.
+    private List<BookingResponse> toResponseList(List<Booking> bookings) {
+        if (bookings.isEmpty()) {
+            return List.of();
+        }
+        List<Long> bookingIds = bookings.stream().map(Booking::getId).toList();
+        Set<Long> reviewedIds = new HashSet<>(reviewRepository.findBookingIdsWithReview(bookingIds));
+        return bookings.stream()
+                .map(booking -> toResponse(booking, reviewedIds.contains(booking.getId())))
                 .toList();
     }
 
@@ -421,6 +434,10 @@ public class BookingService {
     }
 
     private BookingResponse toResponse(Booking booking) {
+        return toResponse(booking, reviewRepository.existsByBookingId(booking.getId()));
+    }
+
+    private BookingResponse toResponse(Booking booking, boolean reviewed) {
         return BookingResponse.builder()
                 .id(booking.getId())
                 .photographerId(booking.getPhotographer().getId())
@@ -439,6 +456,7 @@ public class BookingService {
                 .verificationMethod(booking.getVerificationMethod())
                 .depositAmount(booking.getDepositAmount())
                 .depositPaid(booking.isDepositPaid())
+                .reviewed(reviewed)
                 .createdAt(booking.getCreatedAt())
                 .build();
     }

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import BlueCheckIcon from './BlueCheckIcon'
+import StarRating from './StarRating'
 
 export default function PhotographerCard({ photographer }) {
   const {
@@ -9,7 +10,6 @@ export default function PhotographerCard({ photographer }) {
     baseLocation,
     specialties = [],
     ratingAvg,
-    totalReviews,
     verified,
     hasBlueBadge,
   } = photographer
@@ -58,15 +58,8 @@ export default function PhotographerCard({ photographer }) {
           </div>
         )}
 
-        <div className="mt-4 flex items-center gap-1 text-sm">
-          {ratingAvg > 0 ? (
-            <>
-              <span className="font-medium text-ink">{ratingAvg.toFixed(1)}</span>
-              <span className="text-ink-muted">({totalReviews} review{totalReviews === 1 ? '' : 's'})</span>
-            </>
-          ) : (
-            <span className="text-ink-muted">No reviews yet</span>
-          )}
+        <div className="mt-4">
+          <StarRating value={ratingAvg} size={16} />
         </div>
       </div>
     </Link>

@@ -283,7 +283,7 @@ Admin
 
 ---
 
-## 10. Suggested Build Order (for Claude Code sessions)
+## 10. Suggested Build Order
 
 1. Set up backend project (Spring Boot, PostgreSQL connection, base entities)
 2. Auth (register/login for photographer, JWT)

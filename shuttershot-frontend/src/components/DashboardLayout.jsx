@@ -20,6 +20,7 @@ const NAV_ITEMS = [
   { to: '/dashboard/calendar', label: 'Calendar' },
   { to: '/dashboard/packages', label: 'Packages' },
   { to: '/dashboard/bookings', label: 'Bookings' },
+  { to: '/dashboard/reviews', label: 'Feedback' },
   { to: '/dashboard/profile', label: 'Profile Settings' },
   { to: '/dashboard/verified-badge', label: 'Verified Badge' },
 ]

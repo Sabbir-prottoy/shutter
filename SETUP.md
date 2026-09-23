@@ -42,6 +42,26 @@ runs with zero configuration:
 | `MAIL_PASSWORD` | *(empty)* — for Gmail, a 16-character [App Password](https://myaccount.google.com/apppasswords), not your normal password |
 | `MAIL_FROM` | `no-reply@shuttershot.local` |
 
+**Optional third-party integrations** — each of these features degrades
+gracefully without its key (the feature just reports it isn't configured
+yet), so none of them are required for a fresh clone to run:
+
+| Variable | Default | Used for |
+|---|---|---|
+| `GEMINI_API_KEY` | *(empty)* | The floating chat widget. Get a key at [aistudio.google.com](https://aistudio.google.com/apikey). |
+| `GEMINI_MODEL` | `gemini-3.6-flash` | |
+| `GROQ_API_KEY` | *(empty)* | The full-page AI chat and voice assistant (`/chat`, `/speak`). Get a key at [console.groq.com](https://console.groq.com). |
+| `GROQ_MODEL` | `openai/gpt-oss-120b` | |
+| `GROQ_TRANSCRIPTION_MODEL` | `whisper-large-v3-turbo` | Speech-to-text for the voice assistant. |
+| `AIORNOT_API_KEY` | *(empty)* | The admin panel's manual "Deep check with AI" on a portfolio photo. Get a key at [aiornot.com](https://aiornot.com). |
+| `DETECTRA_MODEL_PATH` | `models/detectra-v3/model.onnx` | Local ONNX model that automatically screens every portfolio upload for AI-generated imagery — no external call or key needed, just the model file present at this path. |
+| `DETECTRA_REJECT_THRESHOLD` | `0.90` | How confident the model must be before an upload is auto-rejected. |
+| `DUPLICATE_MAX_DISTANCE` | `6` | How close two photos' perceptual hashes must be to count as the same picture, for catching a photo already published elsewhere on the site. |
+| `SSLCOMMERZ_STORE_ID` | *(empty)* | Booking deposits and the blue-badge payment. Sandbox credentials from [developer.sslcommerz.com](https://developer.sslcommerz.com). |
+| `SSLCOMMERZ_STORE_PASSWORD` | *(empty)* | |
+| `SSLCOMMERZ_SANDBOX` | `true` | Set to `false` with live credentials to switch to the production gateway. |
+| `TEXTBELT_API_KEY` | `textbelt` | SMS delivery for phone OTP. The default is a shared free-tier key (1 real SMS/day); get a paid key at [textbelt.com](https://textbelt.com) for real volume. |
+
 **Forgot-password emails:** if `MAIL_USERNAME`/`MAIL_PASSWORD` aren't set (the
 default for a fresh clone), sending fails silently and the backend logs the
 reset link instead — `grep "reset link" backend.log` (or watch the console)

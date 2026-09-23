@@ -4,6 +4,7 @@ import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import OtpInput from '../components/OtpInput'
+import RatingForm from '../components/RatingForm'
 import { triggerClickBurst } from '../components/ClickBurstLayer'
 import { useAuth } from '../context/AuthContext'
 import {
@@ -775,6 +776,24 @@ export default function BookingFlow() {
                 <dd className="text-ink">{BOOKING_STATUS_LABELS[booking.status] || booking.status}</dd>
               </div>
             </dl>
+
+            {booking.status === 'COMPLETED' && (
+              <div className="mt-6 border-t border-border pt-6">
+                {booking.reviewed ? (
+                  <p className="text-sm text-ink-muted">
+                    <span className="font-medium text-ink">Thanks for your feedback!</span> Your
+                    rating has been sent to {profile.name} for approval — it'll appear on their
+                    profile once they approve it.
+                  </p>
+                ) : (
+                  <RatingForm
+                    bookingId={booking.id}
+                    photographerName={profile.name}
+                    onSubmitted={() => setBooking((prev) => ({ ...prev, reviewed: true }))}
+                  />
+                )}
+              </div>
+            )}
 
             <Link
               to={`/photographers/${photographerId}`}

@@ -108,6 +108,23 @@ export function getPhotographerReviews(id) {
   return api.get('/reviews', { params: { photographerId: id } }).then((res) => res.data)
 }
 
+export function submitReview({ bookingId, rating, comment }) {
+  return api.post('/reviews', { bookingId, rating, comment }).then((res) => res.data)
+}
+
+// Reviews (photographer dashboard, ratings left about their own profile)
+export function getMyPendingReviews() {
+  return api.get('/reviews/pending').then((res) => res.data)
+}
+
+export function approveMyReview(id) {
+  return api.put(`/reviews/${id}/approve`).then((res) => res.data)
+}
+
+export function rejectMyReview(id) {
+  return api.put(`/reviews/${id}/reject`).then((res) => res.data)
+}
+
 // Portfolio (photographer dashboard, own images)
 export function getMyPortfolio() {
   return api.get('/portfolio').then((res) => res.data)

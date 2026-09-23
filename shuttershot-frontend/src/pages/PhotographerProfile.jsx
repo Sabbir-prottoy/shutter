@@ -6,6 +6,7 @@ import PortfolioGrid from '../components/PortfolioGrid'
 import PackageCard from '../components/PackageCard'
 import AvailabilityCalendar from '../components/AvailabilityCalendar'
 import ReviewCard from '../components/ReviewCard'
+import StarRating from '../components/StarRating'
 import BlueCheckIcon from '../components/BlueCheckIcon'
 import { triggerClickBurst } from '../components/ClickBurstLayer'
 import {
@@ -95,7 +96,6 @@ export default function PhotographerProfile() {
     specialties,
     yearsExperience,
     ratingAvg,
-    totalReviews,
     verified,
     hasBlueBadge,
   } = profile
@@ -132,14 +132,7 @@ export default function PhotographerProfile() {
               {yearsExperience != null && (
                 <span>{yearsExperience} year{yearsExperience === 1 ? '' : 's'} experience</span>
               )}
-              {ratingAvg > 0 ? (
-                <span>
-                  <span className="font-medium text-ink">{ratingAvg.toFixed(1)}</span> (
-                  {totalReviews} review{totalReviews === 1 ? '' : 's'})
-                </span>
-              ) : (
-                <span>No reviews yet</span>
-              )}
+              <StarRating value={ratingAvg} />
             </div>
 
             {specialties.length > 0 && (

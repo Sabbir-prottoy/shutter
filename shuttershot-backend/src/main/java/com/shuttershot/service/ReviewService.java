@@ -14,6 +14,7 @@ import com.shuttershot.repository.BookingRepository;
 import com.shuttershot.repository.PhotographerProfileRepository;
 import com.shuttershot.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -64,6 +65,43 @@ public class ReviewService {
         return reviewRepository.findByStatus(ReviewStatus.PENDING).stream()
                 .map(this::toResponse)
                 .toList();
+    }
+
+    // The primary moderation path: a photographer reviewing ratings left about
+    // their own work. Admin/moderator moderation above still exists as a
+    // separate oversight path and is untouched by this.
+    @Transactional(readOnly = true)
+    public List<ReviewResponse> listPendingForPhotographer(Long authenticatedUserId) {
+        PhotographerProfile photographer = findOwnProfile(authenticatedUserId);
+        return reviewRepository.findByPhotographerIdAndStatus(photographer.getId(), ReviewStatus.PENDING).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    @Transactional
+    public ReviewResponse approveAsPhotographer(Long id, Long authenticatedUserId) {
+        Review review = findById(id);
+        requireOwnership(review, authenticatedUserId);
+        return approve(id);
+    }
+
+    @Transactional
+    public ReviewResponse rejectAsPhotographer(Long id, Long authenticatedUserId) {
+        Review review = findById(id);
+        requireOwnership(review, authenticatedUserId);
+        return reject(id);
+    }
+
+    private void requireOwnership(Review review, Long authenticatedUserId) {
+        Long ownerId = review.getPhotographer().getUser().getId();
+        if (!ownerId.equals(authenticatedUserId)) {
+            throw new AccessDeniedException("You can only moderate ratings left about your own profile");
+        }
+    }
+
+    private PhotographerProfile findOwnProfile(Long authenticatedUserId) {
+        return photographerProfileRepository.findByUserId(authenticatedUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Photographer profile not found for current user"));
     }
 
     @Transactional

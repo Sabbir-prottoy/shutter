@@ -36,5 +36,9 @@ public class BookingResponse {
     private BookingVerificationMethod verificationMethod;
     private BigDecimal depositAmount;
     private boolean depositPaid;
+    // True once a rating has been submitted for this booking (whatever its
+    // moderation status) — lets the client hide the "rate this session" form
+    // rather than let someone hit the one-review-per-booking error.
+    private boolean reviewed;
     private LocalDateTime createdAt;
 }
