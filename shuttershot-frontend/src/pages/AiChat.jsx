@@ -154,7 +154,7 @@ export default function AiChat() {
       <button
         type="button"
         onClick={startNewChat}
-        className="rounded-card bg-accent-gradient px-4 py-2.5 text-sm font-medium text-white shadow-card transition-shadow hover:shadow-hover"
+        className="pill-focus rounded-full bg-accent-gradient px-4 py-2.5 text-sm font-medium text-white shadow-card transition-shadow hover:shadow-hover"
       >
         New chat
       </button>
@@ -175,7 +175,7 @@ export default function AiChat() {
           {conversations.map((conversation) => (
             <li
               key={conversation.id}
-              className={`group flex items-center gap-1 rounded-card pr-1 transition-colors ${
+              className={`group flex items-center gap-1 rounded-full pr-1 transition-colors ${
                 activeId === conversation.id
                   ? 'bg-surface-raised text-ink'
                   : 'text-ink-muted hover:bg-surface-raised hover:text-ink'
@@ -184,7 +184,7 @@ export default function AiChat() {
               <button
                 type="button"
                 onClick={() => openConversation(conversation.id)}
-                className="min-w-0 flex-1 truncate px-3 py-2 text-left text-sm"
+                className="pill-focus min-w-0 flex-1 truncate rounded-full px-4 py-2 text-left text-sm"
               >
                 {conversation.title}
               </button>
@@ -192,7 +192,7 @@ export default function AiChat() {
                 type="button"
                 aria-label={`Delete "${conversation.title}"`}
                 onClick={(event) => handleDelete(conversation.id, event)}
-                className="shrink-0 rounded p-1.5 opacity-0 transition-opacity hover:text-booked focus-visible:opacity-100 group-hover:opacity-100"
+                className="pill-focus shrink-0 rounded-full p-1.5 opacity-0 transition-opacity hover:text-booked focus-visible:opacity-100 group-hover:opacity-100"
               >
                 <TrashIcon />
               </button>
@@ -227,7 +227,7 @@ export default function AiChat() {
             <button
               type="button"
               onClick={() => setSidebarOpen(true)}
-              className="rounded-card px-2 py-1 text-sm text-ink-muted transition-colors hover:text-accent lg:hidden"
+              className="pill-focus rounded-full px-3 py-1 text-sm text-ink-muted transition-colors hover:text-accent lg:hidden"
             >
               History
             </button>
@@ -259,7 +259,7 @@ export default function AiChat() {
                       key={suggestion}
                       type="button"
                       onClick={() => submit(suggestion)}
-                      className="rounded-card border border-border px-3 py-2.5 text-left text-sm text-ink-muted transition-colors hover:border-accent hover:text-accent"
+                      className="pill-focus rounded-3xl border border-border px-4 py-2.5 text-left text-sm text-ink-muted transition-colors hover:border-accent hover:bg-accent/10 hover:text-accent"
                     >
                       {suggestion}
                     </button>
@@ -271,7 +271,7 @@ export default function AiChat() {
             {messages.map((message, index) =>
               message.role === 'user' ? (
                 <div key={index} className="flex justify-end">
-                  <div className="max-w-[80%] rounded-card bg-accent-gradient px-4 py-2.5 text-[15px] leading-relaxed text-white shadow-card">
+                  <div className="max-w-[80%] rounded-3xl bg-accent-gradient px-5 py-2.5 text-[15px] leading-relaxed text-white shadow-card">
                     {message.content}
                   </div>
                 </div>
@@ -306,7 +306,7 @@ export default function AiChat() {
           {error && <p className="px-4 pb-2 text-sm text-booked sm:px-6">{error}</p>}
 
           <div className="border-t border-border px-4 pb-10 pt-5 sm:px-6">
-            <div className="mx-auto flex w-full max-w-xl items-center gap-2 rounded-full border border-border bg-surface py-1.5 pl-5 pr-1.5 focus-within:border-accent">
+            <div className="mx-auto flex w-full max-w-xl items-center gap-2 rounded-full border border-border bg-surface py-1.5 pl-5 pr-1.5 focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/40">
               <textarea
                 rows={1}
                 value={draft}
@@ -314,13 +314,13 @@ export default function AiChat() {
                 onKeyDown={handleKeyDown}
                 placeholder="Ask about photographers, packages or dates…"
                 aria-label="Message"
-                className="max-h-28 w-full flex-1 resize-none bg-transparent py-1.5 text-[15px] text-ink placeholder:text-ink-muted focus:outline-none"
+                className="bare-input max-h-28 w-full flex-1 resize-none bg-transparent py-1.5 text-[15px] text-ink placeholder:text-ink-muted"
               />
               <button
                 type="button"
                 onClick={() => submit(draft)}
                 disabled={!draft.trim() || sending}
-                className="shrink-0 rounded-full bg-ink px-5 py-2 text-sm font-medium text-surface transition-opacity hover:opacity-90 disabled:opacity-40"
+                className="pill-focus shrink-0 rounded-full bg-ink px-5 py-2 text-sm font-medium text-surface transition-opacity hover:opacity-90 disabled:opacity-40"
               >
                 Send
               </button>
