@@ -16,6 +16,8 @@ const BASE_NAV_ITEMS = [
   { to: '/admin/poses', label: 'Manage pose' },
   { to: '/admin/music', label: 'Manage Music' },
   { to: '/admin/categories', label: 'Photoshoot category manage' },
+  { to: '/admin/products', label: 'Manage Products' },
+  { to: '/admin/orders', label: 'Manage Orders' },
   { to: '/admin/users', label: 'User Management' },
 ]
 

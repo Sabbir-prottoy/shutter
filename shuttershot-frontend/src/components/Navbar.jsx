@@ -1,5 +1,6 @@
-import { Link, NavLink } from 'react-router-dom'
+import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useCart } from '../context/CartContext'
 import Logo from './Logo'
 import AiSparkIcon from './AiSparkIcon'
 import ThemeToggle from './ThemeToggle'
@@ -33,6 +34,49 @@ const aiActionClass = `${linkBase} text-blue-600 underline-offset-2 hover:text-b
 
 const ctaButtonClass =
   'whitespace-nowrap rounded-card bg-accent-gradient px-3 py-1.5 text-base font-medium text-white shadow-card transition-shadow hover:shadow-hover active:animate-nav-bounce'
+
+// The cart icon opens the Accessories Marketplace; the badge counts what is in the cart.
+// Already inside the marketplace, it opens the cart in place instead of reloading the
+// page, so the shopper keeps their scroll position, filters and loaded products.
+function CartLink() {
+  const { count, openCart } = useCart()
+  const { pathname } = useLocation()
+  const label = count > 0 ? `Accessories Marketplace, ${count} in cart` : 'Accessories Marketplace'
+
+  function handleClick(event) {
+    if (pathname === '/marketplace') {
+      event.preventDefault()
+      openCart()
+    }
+  }
+
+  return (
+    <NavLink
+      to="/marketplace"
+      onClick={handleClick}
+      aria-label={label}
+      title="Accessories Marketplace"
+      className={({ isActive }) =>
+        `relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border transition-colors active:animate-nav-bounce ${
+          isActive
+            ? 'border-transparent bg-accent-gradient text-white shadow-card'
+            : 'border-border bg-surface text-ink-muted hover:border-accent hover:text-accent'
+        }`
+      }
+    >
+      <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M3 4h2.2l2.2 11h9.4l2-8H6.3" />
+        <circle cx="9.5" cy="19.5" r="1.4" />
+        <circle cx="16.5" cy="19.5" r="1.4" />
+      </svg>
+      {count > 0 && (
+        <span className="absolute -right-1.5 -top-1.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-accent-gradient px-1 text-[10px] font-semibold leading-none text-white shadow-card">
+          {count > 99 ? '99+' : count}
+        </span>
+      )}
+    </NavLink>
+  )
+}
 
 function ownAreaFor(role) {
   if (role === 'ADMIN' || role === 'MODERATOR') return '/admin'
@@ -122,12 +166,15 @@ export default function Navbar() {
             </NavLink>
 
             {isAuthenticated ? (
+              <>
+              <CartLink />
               <Link
                 to={ownAreaFor(user?.role)}
                 className="rounded-card bg-accent-gradient px-3 py-1.5 text-base font-medium text-white shadow-card transition-shadow hover:shadow-hover active:animate-nav-glow"
               >
                 {ownAreaLabel(user?.role)}
               </Link>
+              </>
             ) : (
               <>
                 <NavLink to="/admin/login" className={adminLinkClass}>
@@ -136,6 +183,7 @@ export default function Navbar() {
                 <Link to="/register" className={ctaButtonClass}>
                   Join<span className="hidden sm:inline"> as photographer</span>
                 </Link>
+                <CartLink />
                 <NavLink to="/login" className={loginLinkClass}>
                   Log in
                 </NavLink>

@@ -426,6 +426,68 @@ export function deletePhotoshootCategory(id) {
   return api.delete(`/admin/photoshoot-categories/${id}`).then((res) => res.data)
 }
 
+// Accessories Marketplace (public)
+export function getProducts({ category, q, sort, page = 0, size = 12 } = {}) {
+  return api
+    .get('/products', {
+      params: { category: category || undefined, q: q || undefined, sort: sort || undefined, page, size },
+    })
+    .then((res) => res.data)
+}
+
+export function getProductCategoryCounts() {
+  return api.get('/products/categories').then((res) => res.data)
+}
+
+// Current details for the products in a cart (which stores only ids).
+export function getProductsByIds(ids) {
+  return api.get('/products/by-ids', { params: { ids: ids.join(',') } }).then((res) => res.data)
+}
+
+export function getDeliveryRules() {
+  return api.get('/orders/delivery-rules').then((res) => res.data)
+}
+
+export function placeOrder(payload) {
+  return api.post('/orders', payload).then((res) => res.data)
+}
+
+// Manage Products (admin, any ADMIN/MODERATOR)
+export function getAdminProducts() {
+  return api.get('/admin/products').then((res) => res.data)
+}
+
+export function createProduct(payload) {
+  return api.post('/admin/products', payload).then((res) => res.data)
+}
+
+export function updateProduct(id, payload) {
+  return api.put(`/admin/products/${id}`, payload).then((res) => res.data)
+}
+
+export function deleteProduct(id) {
+  return api.delete(`/admin/products/${id}`).then((res) => res.data)
+}
+
+export function uploadProductImage(id, file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return api.post(`/admin/products/${id}/image`, formData).then((res) => res.data)
+}
+
+export function removeProductImage(id) {
+  return api.delete(`/admin/products/${id}/image`).then((res) => res.data)
+}
+
+// Manage Orders (admin, any ADMIN/MODERATOR)
+export function getAdminOrders({ status, page = 0, size = 20 } = {}) {
+  return api.get('/admin/orders', { params: { status: status || undefined, page, size } }).then((res) => res.data)
+}
+
+export function updateOrderStatus(id, status) {
+  return api.put(`/admin/orders/${id}/status`, { status }).then((res) => res.data)
+}
+
 // Chatbot (public, site-wide)
 export function askChatbot(message, history) {
   return api.post('/chatbot/ask', { message, history }).then((res) => res.data)

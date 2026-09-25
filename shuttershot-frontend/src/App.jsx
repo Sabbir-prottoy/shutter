@@ -13,6 +13,7 @@ import {
 import NotFound from './pages/NotFound'
 import ProtectedRoute from './components/ProtectedRoute'
 import ChatWidget from './components/ChatWidget'
+import CartDrawer from './components/CartDrawer'
 import ClickBurstLayer from './components/ClickBurstLayer'
 import VoiceAgent from './components/VoiceAgent'
 
@@ -38,6 +39,8 @@ const PhotoModeration = lazy(() => import('./pages/AdminPanel/PhotoModeration'))
 const PoseManager = lazy(() => import('./pages/AdminPanel/PoseManager'))
 const MusicManager = lazy(() => import('./pages/AdminPanel/MusicManager'))
 const CategoryManager = lazy(() => import('./pages/AdminPanel/CategoryManager'))
+const ProductManager = lazy(() => import('./pages/AdminPanel/ProductManager'))
+const OrderManager = lazy(() => import('./pages/AdminPanel/OrderManager'))
 const UserManagement = lazy(() => import('./pages/AdminPanel/UserManagement'))
 const StaffManagement = lazy(() => import('./pages/AdminPanel/StaffManagement'))
 const AccountHistory = lazy(() => import('./pages/AdminPanel/AccountHistory'))
@@ -51,6 +54,8 @@ const AdminLogin = lazy(() => import('./pages/AdminLogin'))
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'))
 const DashboardLayout = lazy(() => import('./components/DashboardLayout'))
 const AdminLayout = lazy(() => import('./components/AdminLayout'))
+const Marketplace = lazy(() => import('./pages/Marketplace'))
+const Checkout = lazy(() => import('./pages/Checkout'))
 
 function PageFallback() {
   return (
@@ -74,6 +79,8 @@ export default function App() {
           <Route path="/chat" element={<AiChat />} />
           <Route path="/speak" element={<VoiceChat />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/marketplace/checkout" element={<Checkout />} />
 
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
@@ -107,6 +114,8 @@ export default function App() {
               <Route path="/admin/poses" element={<PoseManager />} />
             <Route path="/admin/music" element={<MusicManager />} />
             <Route path="/admin/categories" element={<CategoryManager />} />
+            <Route path="/admin/products" element={<ProductManager />} />
+            <Route path="/admin/orders" element={<OrderManager />} />
               <Route path="/admin/users" element={<UserManagement />} />
               <Route
                 path="/admin/manage-admins"
@@ -149,6 +158,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+      <CartDrawer />
       <ChatWidget />
       <VoiceAgent />
       <ClickBurstLayer />

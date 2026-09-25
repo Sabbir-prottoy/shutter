@@ -28,6 +28,7 @@ public class CorsConfig {
         paymentCallback.setAllowedHeaders(List.of("*"));
         source.registerCorsConfiguration("/api/blue-badge/payment/**", paymentCallback);
         source.registerCorsConfiguration("/api/bookings/payment/**", paymentCallback);
+        source.registerCorsConfiguration("/api/shop/payment/**", paymentCallback);
 
         CorsConfiguration configuration = new CorsConfiguration();
         // Vite falls back to the next free port when 5173 is taken, so allow any local

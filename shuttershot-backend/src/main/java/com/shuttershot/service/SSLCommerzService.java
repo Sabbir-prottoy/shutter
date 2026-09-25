@@ -19,7 +19,8 @@ import java.util.Map;
 // redirect the browser to, and validateTransaction to confirm — server-to-server,
 // after the fact — that a val_id SSLCommerz handed back really corresponds to a
 // completed payment for the expected amount. Business logic (what a valid payment
-// unlocks) lives in BlueBadgeService; this class only knows the gateway's wire format.
+// unlocks) lives in BlueBadgeService, BookingService and OrderService; this class
+// only knows the gateway's wire format.
 @Service
 public class SSLCommerzService {
 
@@ -33,6 +34,21 @@ public class SSLCommerzService {
 
     @Value("${sslcommerz.sandbox:true}")
     private boolean sandbox;
+
+    // What a Marketplace checkout needs to tell the gateway: the order's amount and
+    // where to send the browser afterwards, who is paying, and (for goods that ship)
+    // where they are going.
+    public record ShopSession(BigDecimal amount, String tranId, String successUrl, String failUrl,
+                              String cancelUrl, String customerName, String customerEmail,
+                              String customerPhone, String address, String city, String productName,
+                              int itemCount, boolean physical) {
+    }
+
+    // False when no store credentials are set, so callers can hide online payment
+    // instead of offering something that cannot work.
+    public boolean isConfigured() {
+        return storeId != null && !storeId.isBlank() && storePassword != null && !storePassword.isBlank();
+    }
 
     public String initiateSession(BigDecimal amount, String tranId, String successUrl, String failUrl,
                                    String cancelUrl, String customerName, String customerEmail,
@@ -58,6 +74,46 @@ public class SSLCommerzService {
         form.add("product_profile", "general");
         form.add("num_of_item", "1");
 
+        return startSession(form, tranId);
+    }
+
+    public String initiateShopSession(ShopSession session) {
+        MultiValueMap<String, String> form = new LinkedMultiValueMap<>();
+        form.add("store_id", storeId);
+        form.add("store_passwd", storePassword);
+        form.add("total_amount", session.amount().toPlainString());
+        form.add("currency", "BDT");
+        form.add("tran_id", session.tranId());
+        form.add("success_url", session.successUrl());
+        form.add("fail_url", session.failUrl());
+        form.add("cancel_url", session.cancelUrl());
+        form.add("cus_name", blankToFallback(session.customerName(), "ShutterShot Customer"));
+        form.add("cus_email", blankToFallback(session.customerEmail(), "no-reply@shuttershot.local"));
+        form.add("cus_add1", blankToFallback(session.address(), "Not provided"));
+        form.add("cus_city", blankToFallback(session.city(), "Dhaka"));
+        form.add("cus_postcode", "1000");
+        form.add("cus_country", "Bangladesh");
+        form.add("cus_phone", blankToFallback(session.customerPhone(), "N/A"));
+        form.add("product_name", blankToFallback(session.productName(), "ShutterShot Accessories"));
+        form.add("product_category", session.physical() ? "Photography Accessories" : "Software");
+        form.add("product_profile", session.physical() ? "physical-goods" : "non-physical-goods");
+        form.add("num_of_item", String.valueOf(Math.max(session.itemCount(), 1)));
+
+        if (session.physical()) {
+            form.add("shipping_method", "Courier");
+            form.add("ship_name", blankToFallback(session.customerName(), "ShutterShot Customer"));
+            form.add("ship_add1", blankToFallback(session.address(), "Not provided"));
+            form.add("ship_city", blankToFallback(session.city(), "Dhaka"));
+            form.add("ship_postcode", "1000");
+            form.add("ship_country", "Bangladesh");
+        } else {
+            form.add("shipping_method", "NO");
+        }
+
+        return startSession(form, session.tranId());
+    }
+
+    private String startSession(MultiValueMap<String, String> form, String tranId) {
         Map<String, Object> response;
         try {
             response = client().post()

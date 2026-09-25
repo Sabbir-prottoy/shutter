@@ -145,6 +145,9 @@ export default function PillSelect({ value, onChange, options, icon, ariaLabel, 
           ref={listRef}
           role="listbox"
           aria-label={ariaLabel}
+          // Inside a <label> a click on the list would be forwarded to the trigger
+          // button and reopen the list right after a choice; stop that here.
+          onClick={(event) => event.preventDefault()}
           className="absolute left-0 top-full z-50 mt-2 max-h-72 w-max min-w-full max-w-[18rem] space-y-1 overflow-y-auto rounded-3xl border border-border bg-surface p-2 shadow-hover [scrollbar-width:thin]"
         >
           {options.map((option, index) => {

@@ -110,6 +110,15 @@ export default function Footer() {
 
         <div className="mt-10 border-t border-border pt-6 text-center text-sm text-ink-muted">
           <p>&copy; Build by ShutterShot Team and Build with Love❤️. September 2026</p>
+          <p className="mt-3">
+            If you face any trouble, or if you have any complain, please contact{' '}
+            <a
+              href="mailto:admin@shuttershot.com"
+              className="font-medium text-blue-600 underline-offset-2 transition-colors hover:text-blue-700 hover:underline"
+            >
+              admin@shuttershot.com
+            </a>
+          </p>
         </div>
       </div>
     </footer>

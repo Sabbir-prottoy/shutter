@@ -72,6 +72,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/photographers/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/photographers/**", "/api/reviews").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/poses", "/api/music", "/api/photoshoot-categories").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/products", "/api/products/**", "/api/orders/delivery-rules").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/orders").permitAll()
+                        // Browser return from the SSLCommerz page; confirmed server-to-server in OrderService.
+                        .requestMatchers("/api/shop/payment/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/bookings", "/api/bookings/*/confirm-otp",
                                 "/api/bookings/*/deposit/initiate", "/api/bookings/*/verification-method",
                                 "/api/bookings/verify-qr/*", "/api/reviews")

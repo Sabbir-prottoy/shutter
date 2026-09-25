@@ -52,6 +52,20 @@ public class FileStorageService {
         }
     }
 
+    // For files the application itself ships (e.g. the marketplace's sample photos),
+    // as opposed to something a user uploaded.
+    public String storeBytes(byte[] bytes, String extension) {
+        try {
+            String storedFilename = UUID.randomUUID() + extension;
+            Path targetDir = Paths.get(uploadDir).toAbsolutePath().normalize();
+            Files.createDirectories(targetDir);
+            Files.write(targetDir.resolve(storedFilename), bytes);
+            return baseUrl + "/uploads/" + storedFilename;
+        } catch (IOException e) {
+            throw new FileStorageException("Failed to store file", e);
+        }
+    }
+
     public byte[] loadBytes(String imageUrl) {
         String filename = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
         Path targetPath = Paths.get(uploadDir).toAbsolutePath().normalize().resolve(filename);
