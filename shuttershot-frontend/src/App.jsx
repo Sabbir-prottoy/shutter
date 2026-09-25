@@ -36,6 +36,8 @@ const Overview = lazy(() => import('./pages/AdminPanel/Overview'))
 const ReviewModeration = lazy(() => import('./pages/AdminPanel/ReviewModeration'))
 const PhotoModeration = lazy(() => import('./pages/AdminPanel/PhotoModeration'))
 const PoseManager = lazy(() => import('./pages/AdminPanel/PoseManager'))
+const MusicManager = lazy(() => import('./pages/AdminPanel/MusicManager'))
+const CategoryManager = lazy(() => import('./pages/AdminPanel/CategoryManager'))
 const UserManagement = lazy(() => import('./pages/AdminPanel/UserManagement'))
 const StaffManagement = lazy(() => import('./pages/AdminPanel/StaffManagement'))
 const AccountHistory = lazy(() => import('./pages/AdminPanel/AccountHistory'))
@@ -103,6 +105,8 @@ export default function App() {
               <Route path="/admin/reviews" element={<ReviewModeration />} />
               <Route path="/admin/photos" element={<PhotoModeration />} />
               <Route path="/admin/poses" element={<PoseManager />} />
+            <Route path="/admin/music" element={<MusicManager />} />
+            <Route path="/admin/categories" element={<CategoryManager />} />
               <Route path="/admin/users" element={<UserManagement />} />
               <Route
                 path="/admin/manage-admins"

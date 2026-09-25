@@ -103,10 +103,10 @@ export default function PoseManager() {
                 key={sub.slug}
                 type="button"
                 onClick={() => setActiveSlug(sub.slug)}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+                className={`rounded-full border px-4 py-1.5 text-sm font-medium transition-colors ${
                   activeSlug === sub.slug
-                    ? 'bg-ink text-surface'
-                    : 'bg-surface-raised text-ink-muted hover:text-accent'
+                    ? 'border-transparent bg-accent-gradient text-white shadow-card'
+                    : 'border-border bg-surface text-ink-muted hover:border-accent hover:text-accent'
                 }`}
               >
                 {sub.label} ({(posesBySlug[sub.slug] || []).length})

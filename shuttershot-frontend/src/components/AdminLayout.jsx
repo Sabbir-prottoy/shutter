@@ -14,6 +14,8 @@ const BASE_NAV_ITEMS = [
   { to: '/admin/reviews', label: 'Review Moderation' },
   { to: '/admin/photos', label: 'Photo Moderation' },
   { to: '/admin/poses', label: 'Manage pose' },
+  { to: '/admin/music', label: 'Manage Music' },
+  { to: '/admin/categories', label: 'Photoshoot category manage' },
   { to: '/admin/users', label: 'User Management' },
 ]
 

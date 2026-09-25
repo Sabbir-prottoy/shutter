@@ -386,6 +386,46 @@ export function deletePoseImage(id) {
   return api.delete(`/admin/poses/${id}`).then((res) => res.data)
 }
 
+// Music suggestions (public list on the Suggestions page)
+export function getMusic() {
+  return api.get('/music').then((res) => res.data)
+}
+
+// Manage Music (admin, any ADMIN/MODERATOR)
+export function getAdminMusic() {
+  return api.get('/admin/music').then((res) => res.data)
+}
+
+export function addMusic({ category, title, credit, youtubeUrl }) {
+  return api.post('/admin/music', { category, title, credit, youtubeUrl }).then((res) => res.data)
+}
+
+export function deleteMusic(id) {
+  return api.delete(`/admin/music/${id}`).then((res) => res.data)
+}
+
+// Photoshoot categories added by admins (extra cards in the category overview)
+export function getPhotoshootCategories() {
+  return api.get('/photoshoot-categories').then((res) => res.data)
+}
+
+// Photoshoot category manage (admin, any ADMIN/MODERATOR)
+export function getAdminPhotoshootCategories() {
+  return api.get('/admin/photoshoot-categories').then((res) => res.data)
+}
+
+export function addPhotoshootCategory(payload) {
+  return api.post('/admin/photoshoot-categories', payload).then((res) => res.data)
+}
+
+export function updatePhotoshootCategory(id, payload) {
+  return api.put(`/admin/photoshoot-categories/${id}`, payload).then((res) => res.data)
+}
+
+export function deletePhotoshootCategory(id) {
+  return api.delete(`/admin/photoshoot-categories/${id}`).then((res) => res.data)
+}
+
 // Chatbot (public, site-wide)
 export function askChatbot(message, history) {
   return api.post('/chatbot/ask', { message, history }).then((res) => res.data)

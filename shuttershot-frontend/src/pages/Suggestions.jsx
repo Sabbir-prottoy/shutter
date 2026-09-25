@@ -3,13 +3,14 @@ import { Link, useLocation } from 'react-router-dom'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { triggerClickBurst } from '../components/ClickBurstLayer'
-import { getPoses } from '../services/api'
+import { getMusic, getPhotoshootCategories, getPoses } from '../services/api'
 
 // Structured as a list so more "Suggestions" topics can be added later
 // without redesigning the page.
 const TOPICS = [
   { id: 'categories', label: 'Photoshoot category overview' },
   { id: 'poses', label: 'Photoshoot pose' },
+  { id: 'music', label: 'Music suggestions' },
 ]
 
 // Reference photos are admin-managed (see the "Manage pose" admin panel) and
@@ -24,6 +25,14 @@ const POSE_SUBSECTIONS = [
   { slug: 'aesthetic', label: 'Aesthetic photoshoot pose' },
   { slug: 'couple', label: 'Couple photoshoot pose' },
   { slug: 'family', label: 'Family photoshoot pose' },
+]
+
+// The three wedding-song languages, in display order. Which songs sit under
+// each one (and the event music) comes from the admin-managed list.
+const WEDDING_LANGUAGES = [
+  { id: 'bangla', title: 'Bangla' },
+  { id: 'english', title: 'English' },
+  { id: 'hindi', title: 'Hindi' },
 ]
 
 function WeddingIcon() {
@@ -64,52 +73,26 @@ function LandscapeIcon() {
   )
 }
 
-// The four categories the rest of the site already searches, filters, and
-// tags portfolio photos by (SearchBar.jsx, ImageCategory on the backend) —
-// this page explains the same four, not a different list, so "Find
-// photographers" always leads to real, matching results.
-const CATEGORIES = [
-  {
-    value: 'wedding',
-    title: 'Wedding',
-    Icon: WeddingIcon,
-    summary: 'Full-day coverage of the ceremony, reception, and the couple.',
-    details:
-      'Covers everything from getting-ready shots and the ceremony itself to reception candids and posed couple portraits. Many photographers also offer holud and pre-wedding shoots as add-ons.',
-    goodFor: ['Wedding day and reception', 'Holud and pre-wedding shoots', 'Family group portraits on the day'],
-    lookFor: 'Someone experienced with your specific ceremony traditions, available for the full event length you need, with a clear turnaround time for edited photos.',
-  },
-  {
-    value: 'portrait',
-    title: 'Portrait',
-    Icon: PortraitIcon,
-    summary: 'Individual or small-group sessions, studio or outdoors.',
-    details:
-      'A focused session built around one or two subjects rather than a large event — professional headshots, family portraits, graduation photos, or maternity and newborn sessions.',
-    goodFor: ['Professional headshots', 'Family or couple portraits', 'Graduation, maternity, or newborn shoots'],
-    lookFor: 'A portfolio in a style you actually like (studio-lit vs. natural light), and clarity on how many edited photos you get.',
-  },
-  {
-    value: 'event',
-    title: 'Event',
-    Icon: EventIcon,
-    summary: 'Birthdays, corporate events, and other gatherings.',
-    details:
-      'Documents a gathering as it happens — candid crowd moments, speeches, performances, and group shots — rather than posed individual portraits.',
-    goodFor: ['Birthdays and anniversaries', 'Corporate events and conferences', 'Cultural and religious celebrations'],
-    lookFor: 'Someone comfortable working unobtrusively in a crowd, with fast turnaround if you need photos shared soon after.',
-  },
-  {
-    value: 'landscape',
-    title: 'Landscape',
-    Icon: LandscapeIcon,
-    summary: 'Travel, nature, architecture, and outdoor scenes.',
-    details:
-      'Photography of places rather than people — travel and nature shoots, architecture and interiors, or cityscapes, often for personal prints, brand content, or real estate.',
-    goodFor: ['Travel and nature photography', 'Architecture and interiors', 'Real estate and location shoots'],
-    lookFor: 'A portfolio shot in conditions similar to yours (time of day, season, indoor vs. outdoor), since lighting matters most here.',
-  },
-]
+// Each built-in category keeps its own icon, keyed by the ?category= value the
+// site's photographer search uses. The text on every card (built-in or added by
+// an admin) comes from the database, so admins can edit it.
+const CATEGORY_ICONS = {
+  wedding: WeddingIcon,
+  portrait: PortraitIcon,
+  event: EventIcon,
+  landscape: LandscapeIcon,
+}
+
+// Icon for categories admins add (the four built-in ones each have their own).
+function GenericCategoryIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8">
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7l1.5-3h5L16 7" />
+      <circle cx="12" cy="13.5" r="3.2" />
+    </svg>
+  )
+}
 
 const sidebarLinkClass = (active) =>
   `w-full rounded-full border px-5 py-2.5 text-left text-sm font-medium shadow-card transition-colors ${
@@ -125,11 +108,46 @@ const poseTabClass = (active) =>
       : 'border-border bg-surface text-ink-muted hover:border-accent hover:text-accent'
   }`
 
+// A dotted list where each name opens its YouTube video in a new tab - the
+// song plays on YouTube, never inside ShutterShot. The dot is drawn rather than
+// using a list marker, so its size and position are fully controlled.
+function MusicList({ items, className = '', emptyText = 'Nothing here yet.' }) {
+  if (items.length === 0) {
+    return <p className={`text-sm text-ink-muted ${className}`}>{emptyText}</p>
+  }
+
+  return (
+    <ul className={`space-y-3 ${className}`}>
+      {items.map((item) => (
+        <li
+          key={item.id}
+          className="relative break-inside-avoid pl-7 before:absolute before:left-1 before:top-[0.4rem] before:h-3 before:w-3 before:rounded-full before:bg-accent before:content-['']"
+        >
+          <a
+            href={item.youtubeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Opens on YouTube in a new tab"
+            className="font-medium text-ink transition-colors hover:text-accent hover:underline"
+          >
+            {item.title}
+          </a>
+          {item.credit && <span className="block text-xs text-ink-muted">{item.credit}</span>}
+        </li>
+      ))}
+    </ul>
+  )
+}
+
 export default function Suggestions() {
   const [selectedTopic, setSelectedTopic] = useState(null)
   const [selectedPose, setSelectedPose] = useState(POSE_SUBSECTIONS[0].slug)
   const [posesBySlug, setPosesBySlug] = useState({})
   const [posesStatus, setPosesStatus] = useState('loading')
+  const [musicByCategory, setMusicByCategory] = useState({})
+  const [musicStatus, setMusicStatus] = useState('loading')
+  const [categories, setCategories] = useState([])
+  const [categoriesStatus, setCategoriesStatus] = useState('loading')
   const location = useLocation()
 
   // Clicking "Suggestions" in the navbar again while already on this page
@@ -147,6 +165,40 @@ export default function Suggestions() {
       })
       .catch(() => setPosesStatus('error'))
   }, [])
+
+  useEffect(() => {
+    getMusic()
+      .then((data) => {
+        setMusicByCategory(data)
+        setMusicStatus('ready')
+      })
+      .catch(() => setMusicStatus('error'))
+  }, [])
+
+  useEffect(() => {
+    getPhotoshootCategories()
+      .then((data) => {
+        setCategories(data)
+        setCategoriesStatus('ready')
+      })
+      .catch(() => setCategoriesStatus('error'))
+  }, [])
+
+  // A category with a search value (wedding, portrait, ...) links to search
+  // filtered by it; one an admin added has no such filter, so it links to all.
+  const categoryCards = categories.map((category) => ({
+    key: category.id,
+    title: category.name,
+    Icon: CATEGORY_ICONS[category.searchValue] || GenericCategoryIcon,
+    summary: category.summary,
+    details: category.details,
+    goodFor: category.goodFor || [],
+    lookFor: category.lookFor,
+    linkTo: category.searchValue ? `/search?category=${category.searchValue}` : '/search',
+    linkLabel: category.searchValue
+      ? `Find ${category.name.toLowerCase()} photographers`
+      : 'Browse photographers',
+  }))
 
   return (
     <div className="flex min-h-screen flex-col bg-canvas">
@@ -240,58 +292,163 @@ export default function Suggestions() {
             </div>
           )}
 
+          {selectedTopic === 'music' && (
+            <div>
+              <h1 className="font-display text-2xl font-bold text-ink sm:text-3xl">
+                Music suggestions
+              </h1>
+              <p className="mt-3 max-w-2xl text-ink-muted">
+                Music decides how a wedding or event film feels. A slow, warm song lets the
+                vows and portraits breathe; an upbeat track carries the dance floor and the
+                entrance. Pick music that matches the mood you want, and ask your videographer
+                to cut the edit to its rhythm.
+              </p>
+              <p className="mt-3 max-w-2xl text-ink-muted">
+                Click any name to open it on YouTube in a new tab, where it will play. Nothing
+                plays on ShutterShot itself.
+              </p>
+              <p className="mt-3 max-w-2xl rounded-card border border-border bg-surface px-4 py-3 text-sm text-ink-muted">
+                <span className="font-medium text-ink">Before you publish: </span>
+                popular songs are copyrighted, and a film that uses them can be muted or blocked
+                when it is posted online. For anything you plan to share publicly, the
+                royalty-free background music below is the safer choice.
+              </p>
+
+              <section className="mt-10">
+                <h2 className="font-display text-xl font-bold text-ink sm:text-2xl">
+                  Suggestion for Wedding
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm text-ink-muted">
+                  Songs in Bangla, English, and Hindi, for the ceremony, portraits, and the
+                  highlight film.
+                </p>
+
+                {musicStatus === 'loading' && <p className="mt-6 text-ink-muted">Loading songs…</p>}
+
+                {musicStatus === 'error' && (
+                  <p className="mt-6 text-ink-muted">
+                    We couldn't load the music list right now. Please check your connection and
+                    try again.
+                  </p>
+                )}
+
+                {musicStatus === 'ready' && (
+                  <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-3">
+                    {WEDDING_LANGUAGES.map((group) => (
+                      <div
+                        key={group.id}
+                        className="rounded-card border border-border bg-surface p-5 shadow-card"
+                      >
+                        <span className="inline-block rounded-full bg-accent-gradient px-4 py-1.5 text-sm font-medium text-white shadow-card">
+                          {group.title}
+                        </span>
+                        <MusicList
+                          items={musicByCategory[group.id] || []}
+                          className="mt-5"
+                          emptyText="No songs here yet."
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              <section className="mt-12">
+                <h2 className="font-display text-xl font-bold text-ink sm:text-2xl">
+                  Suggestion for event
+                </h2>
+                <p className="mt-2 max-w-2xl text-sm text-ink-muted">
+                  Instrumental background music for birthdays, corporate events, and other
+                  gatherings. These tracks are from royalty-free libraries (Bensound and Kevin
+                  MacLeod) and are made to sit quietly under video. Check each track's licence
+                  for the credit it asks for.
+                </p>
+
+                {musicStatus === 'ready' && (
+                  <div className="mt-6 rounded-card border border-border bg-surface p-5 shadow-card">
+                    <MusicList
+                      items={musicByCategory.event || []}
+                      className="columns-1 gap-x-10 sm:columns-2 lg:columns-3"
+                      emptyText="No background music here yet."
+                    />
+                  </div>
+                )}
+              </section>
+            </div>
+          )}
+
           {selectedTopic === 'categories' && (
             <div>
               <h1 className="font-display text-2xl font-bold text-ink sm:text-3xl">
                 Photoshoot category overview
               </h1>
               <p className="mt-3 max-w-2xl text-ink-muted">
-                ShutterShot photographers are searchable by these four categories. Here's what
-                each one actually covers, so you can pick the right one before you search.
+                Here's what each kind of shoot actually covers, so you can pick the right one
+                before you search or book. Wedding, portrait, event, and landscape are the
+                categories photographers can be searched by.
               </p>
 
+              {categoriesStatus === 'loading' && (
+                <p className="mt-8 text-ink-muted">Loading categories…</p>
+              )}
+
+              {categoriesStatus === 'error' && (
+                <p className="mt-8 text-ink-muted">
+                  We couldn't load the categories right now. Please check your connection and try
+                  again.
+                </p>
+              )}
+
+              {categoriesStatus === 'ready' && (
               <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
-                {CATEGORIES.map(({ value, title, Icon, summary, details, goodFor, lookFor }) => (
-                  <div key={value} className="rounded-card border border-border bg-surface p-6 shadow-card">
+                {categoryCards.map(({ key, title, Icon, summary, details, goodFor, lookFor, linkTo, linkLabel }) => (
+                  <div key={key} className="rounded-card border border-border bg-surface p-6 shadow-card">
                     <div className="flex items-center gap-3">
                       <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-accent/15 text-accent">
                         <Icon />
                       </span>
                       <div>
                         <h3 className="font-display text-lg font-bold text-ink">{title}</h3>
-                        <p className="text-sm text-ink-muted">{summary}</p>
+                        {summary && <p className="text-sm text-ink-muted">{summary}</p>}
                       </div>
                     </div>
 
-                    <p className="mt-4 text-sm text-ink-muted">{details}</p>
+                    <p className="mt-4 whitespace-pre-line text-sm text-ink-muted">{details}</p>
 
-                    <p className="mt-4 text-xs font-semibold uppercase tracking-widest text-ink-muted">
-                      Good for
-                    </p>
-                    <ul className="mt-2 space-y-1 text-sm text-ink-muted">
-                      {goodFor.map((item) => (
-                        <li key={item} className="flex gap-2">
-                          <span className="text-accent">•</span>
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    {goodFor.length > 0 && (
+                      <>
+                        <p className="mt-4 text-xs font-semibold uppercase tracking-widest text-ink-muted">
+                          Good for
+                        </p>
+                        <ul className="mt-2 space-y-1 text-sm text-ink-muted">
+                          {goodFor.map((item) => (
+                            <li key={item} className="flex gap-2">
+                              <span className="text-accent">•</span>
+                              <span>{item}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </>
+                    )}
 
-                    <p className="mt-4 text-sm text-ink-muted">
-                      <span className="font-medium text-ink">What to look for: </span>
-                      {lookFor}
-                    </p>
+                    {lookFor && (
+                      <p className="mt-4 text-sm text-ink-muted">
+                        <span className="font-medium text-ink">What to look for: </span>
+                        {lookFor}
+                      </p>
+                    )}
 
                     <Link
-                      to={`/search?category=${value}`}
+                      to={linkTo}
                       onClick={(event) => triggerClickBurst(event.currentTarget)}
                       className="mt-5 inline-block rounded-card bg-accent-gradient px-4 py-2 text-sm font-medium text-white shadow-card transition-shadow hover:shadow-hover"
                     >
-                      Find {title.toLowerCase()} photographers
+                      {linkLabel}
                     </Link>
                   </div>
                 ))}
               </div>
+              )}
             </div>
           )}
         </main>
