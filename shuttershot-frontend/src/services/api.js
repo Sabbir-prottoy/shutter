@@ -83,6 +83,21 @@ export function searchPhotographers({ q, district, category } = {}) {
     .then((res) => res.data)
 }
 
+// One portion of the search at a time: { items, page, size, total, hasMore }.
+export function searchPhotographersPage({ q, district, category, page = 0, size = 12 } = {}) {
+  return api
+    .get('/photographers/search', {
+      params: {
+        q: q || undefined,
+        district: district || undefined,
+        category: category || undefined,
+        page,
+        size,
+      },
+    })
+    .then((res) => res.data)
+}
+
 export function getPhotographer(id) {
   return api.get(`/photographers/${id}`).then((res) => res.data)
 }
@@ -112,17 +127,13 @@ export function submitReview({ bookingId, rating, comment }) {
   return api.post('/reviews', { bookingId, rating, comment }).then((res) => res.data)
 }
 
-// Reviews (photographer dashboard, ratings left about their own profile)
-export function getMyPendingReviews() {
-  return api.get('/reviews/pending').then((res) => res.data)
+// Reviews (photographer dashboard: ratings about my profile, and my replies)
+export function getMyReviews() {
+  return api.get('/reviews/mine').then((res) => res.data)
 }
 
-export function approveMyReview(id) {
-  return api.put(`/reviews/${id}/approve`).then((res) => res.data)
-}
-
-export function rejectMyReview(id) {
-  return api.put(`/reviews/${id}/reject`).then((res) => res.data)
+export function replyToReview(id, reply) {
+  return api.put(`/reviews/${id}/reply`, { reply }).then((res) => res.data)
 }
 
 // Portfolio (photographer dashboard, own images)
@@ -212,16 +223,12 @@ export function updateBookingStatus(id, status) {
 }
 
 // Admin (requires ROLE_ADMIN)
-export function getPendingReviews() {
-  return api.get('/admin/reviews/pending').then((res) => res.data)
+export function getAdminReviews() {
+  return api.get('/admin/reviews').then((res) => res.data)
 }
 
-export function approveReview(id) {
-  return api.put(`/admin/reviews/${id}/approve`).then((res) => res.data)
-}
-
-export function rejectReview(id) {
-  return api.put(`/admin/reviews/${id}/reject`).then((res) => res.data)
+export function removeReview(id) {
+  return api.put(`/admin/reviews/${id}/remove`).then((res) => res.data)
 }
 
 export function getModerationPhotos(status) {
@@ -356,6 +363,27 @@ export function revokeBlueBadge(userId) {
 // Admin overview (analytics dashboard, any ADMIN/MODERATOR)
 export function getAdminOverview() {
   return api.get('/admin/overview').then((res) => res.data)
+}
+
+// Photoshoot poses (public gallery on the Suggestions page)
+export function getPoses() {
+  return api.get('/poses').then((res) => res.data)
+}
+
+// Manage pose (admin, any ADMIN/MODERATOR)
+export function getAdminPoses() {
+  return api.get('/admin/poses').then((res) => res.data)
+}
+
+export function uploadPoseImage(file, subsection) {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('subsection', subsection)
+  return api.post('/admin/poses', formData).then((res) => res.data)
+}
+
+export function deletePoseImage(id) {
+  return api.delete(`/admin/poses/${id}`).then((res) => res.data)
 }
 
 // Chatbot (public, site-wide)

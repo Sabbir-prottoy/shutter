@@ -45,19 +45,14 @@ public class AdminController {
     private final AdminUserService adminUserService;
     private final BlueBadgeService blueBadgeService;
 
-    @GetMapping("/reviews/pending")
-    public ResponseEntity<List<ReviewResponse>> pendingReviews() {
-        return ResponseEntity.ok(reviewService.listPending());
+    @GetMapping("/reviews")
+    public ResponseEntity<List<ReviewResponse>> publishedReviews() {
+        return ResponseEntity.ok(reviewService.listPublished());
     }
 
-    @PutMapping("/reviews/{id}/approve")
-    public ResponseEntity<ReviewResponse> approveReview(@PathVariable Long id) {
-        return ResponseEntity.ok(reviewService.approve(id));
-    }
-
-    @PutMapping("/reviews/{id}/reject")
-    public ResponseEntity<ReviewResponse> rejectReview(@PathVariable Long id) {
-        return ResponseEntity.ok(reviewService.reject(id));
+    @PutMapping("/reviews/{id}/remove")
+    public ResponseEntity<ReviewResponse> removeReview(@PathVariable Long id) {
+        return ResponseEntity.ok(reviewService.remove(id));
     }
 
     @GetMapping("/photos")

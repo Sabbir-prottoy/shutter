@@ -71,6 +71,7 @@ public class SecurityConfig {
                         // /me resolves from the JWT principal so it can't be public.
                         .requestMatchers(HttpMethod.GET, "/api/photographers/me").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/photographers/**", "/api/reviews").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/poses").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/bookings", "/api/bookings/*/confirm-otp",
                                 "/api/bookings/*/deposit/initiate", "/api/bookings/*/verification-method",
                                 "/api/bookings/verify-qr/*", "/api/reviews")

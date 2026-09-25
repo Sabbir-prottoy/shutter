@@ -24,4 +24,6 @@ public class ReviewResponse {
     private String comment;
     private ReviewStatus status;
     private LocalDateTime createdAt;
+    private String photographerReply;
+    private LocalDateTime repliedAt;
 }

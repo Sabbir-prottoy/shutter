@@ -16,6 +16,9 @@ import {
   getPhotographerReviews,
 } from '../services/api'
 
+// Reviews load a few at a time; a well-reviewed photographer can have many.
+const REVIEWS_PAGE_SIZE = 6
+
 export default function PhotographerProfile() {
   const { id } = useParams()
 
@@ -24,6 +27,7 @@ export default function PhotographerProfile() {
   const [packages, setPackages] = useState([])
   const [reviews, setReviews] = useState([])
   const [status, setStatus] = useState('loading')
+  const [visibleReviews, setVisibleReviews] = useState(REVIEWS_PAGE_SIZE)
 
   useEffect(() => {
     let cancelled = false
@@ -196,9 +200,20 @@ export default function PhotographerProfile() {
           <p className="mt-6 text-ink-muted">No reviews yet.</p>
         ) : (
           <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {reviews.map((review) => (
+            {reviews.slice(0, visibleReviews).map((review) => (
               <ReviewCard key={review.id} review={review} />
             ))}
+          </div>
+        )}
+        {reviews.length > visibleReviews && (
+          <div className="mt-6 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setVisibleReviews((count) => count + REVIEWS_PAGE_SIZE)}
+              className="rounded-full border border-border bg-surface px-6 py-2.5 text-sm font-medium text-ink shadow-card transition-colors hover:border-accent hover:text-accent"
+            >
+              Show more reviews ({reviews.length - visibleReviews} left)
+            </button>
           </div>
         )}
       </section>

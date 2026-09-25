@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { approveReview, getPendingReviews, rejectReview } from '../../services/api'
+import { getAdminReviews, removeReview } from '../../services/api'
 
 export default function ReviewModeration() {
   const [reviews, setReviews] = useState([])
@@ -8,31 +8,26 @@ export default function ReviewModeration() {
   const [processingId, setProcessingId] = useState(null)
 
   useEffect(() => {
-    loadReviews()
-  }, [])
-
-  function loadReviews() {
-    setStatus('loading')
-    getPendingReviews()
+    getAdminReviews()
       .then((data) => {
         setReviews(data)
         setStatus('ready')
       })
       .catch(() => setStatus('error'))
-  }
+  }, [])
 
-  async function handleDecision(id, action) {
+  async function handleRemove(id) {
+    if (!window.confirm('Take this review off the photographer\'s public profile?')) {
+      return
+    }
+
     setError(null)
     setProcessingId(id)
     try {
-      if (action === 'approve') {
-        await approveReview(id)
-      } else {
-        await rejectReview(id)
-      }
+      await removeReview(id)
       setReviews((prev) => prev.filter((review) => review.id !== id))
     } catch (err) {
-      setError(err?.response?.data?.message || "We couldn't process that review. Please try again.")
+      setError(err?.response?.data?.message || "We couldn't remove that review. Please try again.")
     } finally {
       setProcessingId(null)
     }
@@ -42,21 +37,24 @@ export default function ReviewModeration() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-2xl font-bold text-ink">Review moderation</h1>
-        <p className="mt-1 text-ink-muted">Approve or reject reviews before they go public.</p>
+        <p className="mt-1 text-ink-muted">
+          Reviews go live as soon as clients submit them. Photographers can reply but cannot remove
+          them, so this is where an abusive or fake review is taken down.
+        </p>
       </div>
 
       {error && <p className="text-sm text-booked">{error}</p>}
 
-      {status === 'loading' && <p className="text-ink-muted">Loading pending reviews…</p>}
+      {status === 'loading' && <p className="text-ink-muted">Loading reviews…</p>}
 
       {status === 'error' && (
         <p className="text-ink-muted">
-          We couldn't load pending reviews right now. Please check your connection and try again.
+          We couldn't load reviews right now. Please check your connection and try again.
         </p>
       )}
 
       {status === 'ready' && reviews.length === 0 && (
-        <p className="text-ink-muted">No reviews waiting for moderation.</p>
+        <p className="text-ink-muted">No published reviews yet.</p>
       )}
 
       {status === 'ready' && reviews.length > 0 && (
@@ -70,6 +68,13 @@ export default function ReviewModeration() {
 
               {review.comment && <p className="mt-3 text-ink-muted">{review.comment}</p>}
 
+              {review.photographerReply && (
+                <p className="mt-3 text-sm text-ink-muted">
+                  <span className="font-medium text-ink">Photographer replied:</span>{' '}
+                  {review.photographerReply}
+                </p>
+              )}
+
               <p className="mt-3 text-xs text-ink-muted">
                 Photographer #{review.photographerId} &middot;{' '}
                 {new Date(review.createdAt).toLocaleDateString('en-US', {
@@ -79,22 +84,14 @@ export default function ReviewModeration() {
                 })}
               </p>
 
-              <div className="mt-4 flex gap-4 text-sm">
+              <div className="mt-4 text-sm">
                 <button
                   type="button"
                   disabled={processingId === review.id}
-                  onClick={() => handleDecision(review.id, 'approve')}
-                  className="text-accent underline transition-opacity hover:opacity-80 disabled:opacity-60"
+                  onClick={() => handleRemove(review.id)}
+                  className="text-ink-muted underline transition-colors hover:text-booked disabled:opacity-60"
                 >
-                  Approve
-                </button>
-                <button
-                  type="button"
-                  disabled={processingId === review.id}
-                  onClick={() => handleDecision(review.id, 'reject')}
-                  className="text-ink-muted underline transition-colors hover:text-accent disabled:opacity-60"
-                >
-                  Reject
+                  Remove review
                 </button>
               </div>
             </div>

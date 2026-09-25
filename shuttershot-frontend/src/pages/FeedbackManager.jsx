@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { approveMyReview, getMyPendingReviews, rejectMyReview } from '../services/api'
+import { getMyReviews, replyToReview } from '../services/api'
 
 function Stars({ rating }) {
   return (
@@ -10,112 +10,164 @@ function Stars({ rating }) {
   )
 }
 
+function formatDate(value) {
+  return new Date(value).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+}
+
+function FeedbackCard({ review, onReplied }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(review.photographerReply || '')
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState(null)
+
+  async function handleSubmit(event) {
+    event.preventDefault()
+    if (!draft.trim()) {
+      setError('Please write a reply first.')
+      return
+    }
+
+    setError(null)
+    setSaving(true)
+    try {
+      onReplied(await replyToReview(review.id, draft))
+      setEditing(false)
+    } catch (err) {
+      setError(err?.response?.data?.message || "We couldn't post that reply. Please try again.")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="rounded-card bg-surface p-6 shadow-card">
+      <div className="flex items-start justify-between gap-3">
+        <p className="font-sans text-lg font-semibold text-ink">{review.clientName}</p>
+        <Stars rating={review.rating} />
+      </div>
+
+      {review.comment && <p className="mt-3 text-ink-muted">{review.comment}</p>}
+      <p className="mt-3 text-xs text-ink-muted">{formatDate(review.createdAt)}</p>
+
+      {review.photographerReply && !editing && (
+        <div className="mt-4 rounded-card border-l-4 border-accent bg-surface-raised px-4 py-3">
+          <p className="text-xs font-semibold uppercase tracking-widest text-ink-muted">Your reply</p>
+          <p className="mt-1 whitespace-pre-line text-sm text-ink">{review.photographerReply}</p>
+          <button
+            type="button"
+            onClick={() => {
+              setDraft(review.photographerReply)
+              setEditing(true)
+            }}
+            className="mt-2 text-sm text-ink-muted underline transition-colors hover:text-accent"
+          >
+            Edit reply
+          </button>
+        </div>
+      )}
+
+      {!review.photographerReply && !editing && (
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="mt-4 text-sm text-accent underline transition-opacity hover:opacity-80"
+        >
+          Reply
+        </button>
+      )}
+
+      {editing && (
+        <form onSubmit={handleSubmit} className="mt-4">
+          <textarea
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            rows={3}
+            maxLength={1000}
+            placeholder="Write a public reply to this rating"
+            className="w-full rounded-card border border-border bg-surface px-3 py-2 text-sm text-ink placeholder:text-ink-muted focus:border-accent"
+          />
+          {error && <p className="mt-1 text-xs text-booked">{error}</p>}
+          <div className="mt-2 flex items-center gap-4 text-sm">
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-card bg-accent-gradient px-4 py-1.5 font-medium text-white shadow-card transition-shadow hover:shadow-hover disabled:opacity-60"
+            >
+              {saving ? 'Posting…' : review.photographerReply ? 'Save reply' : 'Post reply'}
+            </button>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => {
+                setEditing(false)
+                setError(null)
+              }}
+              className="text-ink-muted underline transition-colors hover:text-accent"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  )
+}
+
 export default function FeedbackManager() {
   const [reviews, setReviews] = useState([])
   const [status, setStatus] = useState('loading')
-  const [error, setError] = useState(null)
-  const [processingId, setProcessingId] = useState(null)
 
   useEffect(() => {
-    loadReviews()
-  }, [])
-
-  function loadReviews() {
-    setStatus('loading')
-    getMyPendingReviews()
+    getMyReviews()
       .then((data) => {
         setReviews(data)
         setStatus('ready')
       })
       .catch(() => setStatus('error'))
+  }, [])
+
+  function replaceReview(updated) {
+    setReviews((prev) => prev.map((review) => (review.id === updated.id ? updated : review)))
   }
 
-  async function handleDecision(id, action) {
-    setError(null)
-    setProcessingId(id)
-    try {
-      if (action === 'approve') {
-        await approveMyReview(id)
-      } else {
-        await rejectMyReview(id)
-      }
-      setReviews((prev) => prev.filter((review) => review.id !== id))
-    } catch (err) {
-      setError(err?.response?.data?.message || "We couldn't process that feedback. Please try again.")
-    } finally {
-      setProcessingId(null)
-    }
-  }
+  const awaitingReply = reviews.filter((review) => !review.photographerReply).length
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
         <h1 className="font-display text-2xl font-bold text-ink">Feedback</h1>
-        {status === 'ready' && (
+        {status === 'ready' && awaitingReply > 0 && (
           <span className="rounded-full bg-accent/15 px-2.5 py-0.5 text-sm font-medium text-accent">
-            {reviews.length} pending
+            {awaitingReply} without a reply
           </span>
         )}
       </div>
       <p className="-mt-4 text-ink-muted">
-        Clients can rate a session once it's marked completed. Every rating lands here first — it
-        only appears on your public profile, and only counts toward your average, once you
-        approve it.
+        Ratings from clients appear on your public profile as soon as they're submitted, and count
+        toward your average right away. You can reply to any rating; replies show publicly beneath
+        it.
       </p>
 
-      {error && <p className="text-sm text-booked">{error}</p>}
-
-      {status === 'loading' && <p className="text-ink-muted">Loading pending feedback…</p>}
+      {status === 'loading' && <p className="text-ink-muted">Loading feedback…</p>}
 
       {status === 'error' && (
         <p className="text-ink-muted">
-          We couldn't load your pending feedback right now. Please check your connection and try
-          again.
+          We couldn't load your feedback right now. Please check your connection and try again.
         </p>
       )}
 
       {status === 'ready' && reviews.length === 0 && (
-        <p className="text-ink-muted">Nothing waiting for review right now.</p>
+        <p className="text-ink-muted">No ratings yet. They'll show up here once clients leave them.</p>
       )}
 
       {status === 'ready' && reviews.length > 0 && (
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {reviews.map((review) => (
-            <div key={review.id} className="rounded-card bg-surface p-6 shadow-card">
-              <div className="flex items-start justify-between gap-3">
-                <p className="font-sans text-lg font-semibold text-ink">{review.clientName}</p>
-                <Stars rating={review.rating} />
-              </div>
-
-              {review.comment && <p className="mt-3 text-ink-muted">{review.comment}</p>}
-
-              <p className="mt-3 text-xs text-ink-muted">
-                {new Date(review.createdAt).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                })}
-              </p>
-
-              <div className="mt-4 flex gap-4 text-sm">
-                <button
-                  type="button"
-                  disabled={processingId === review.id}
-                  onClick={() => handleDecision(review.id, 'approve')}
-                  className="text-accent underline transition-opacity hover:opacity-80 disabled:opacity-60"
-                >
-                  Approve
-                </button>
-                <button
-                  type="button"
-                  disabled={processingId === review.id}
-                  onClick={() => handleDecision(review.id, 'reject')}
-                  className="text-ink-muted underline transition-colors hover:text-accent disabled:opacity-60"
-                >
-                  Reject
-                </button>
-              </div>
-            </div>
+            <FeedbackCard key={review.id} review={review} onReplied={replaceReview} />
           ))}
         </div>
       )}

@@ -1,6 +1,7 @@
 package com.shuttershot.service;
 
 import com.shuttershot.dto.OwnPhotographerProfileResponse;
+import com.shuttershot.dto.PagedResponse;
 import com.shuttershot.dto.PhotographerProfileResponse;
 import com.shuttershot.dto.PhotographerSummaryResponse;
 import com.shuttershot.dto.UpdatePhotographerProfileRequest;
@@ -15,6 +16,9 @@ import com.shuttershot.repository.UserRepository;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -32,18 +36,46 @@ public class PhotographerService {
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
 
+    private static final int MAX_PAGE_SIZE = 50;
+
+    // Blue badge holders sort first, per the whole point of buying the badge.
+    // The id tie-break keeps page boundaries stable between requests.
+    private static final Sort SEARCH_ORDER = Sort.by(Sort.Order.desc("hasBlueBadge"), Sort.Order.asc("id"));
+
     @Transactional(readOnly = true)
     public List<PhotographerSummaryResponse> search(String q, String district, String category) {
+        return photographerProfileRepository.findAll(searchFilter(q, district, category), SEARCH_ORDER).stream()
+                .map(this::toSummary)
+                .toList();
+    }
+
+    // Same filters and ordering as search(), but one portion at a time, so the
+    // browser only ever downloads and renders the photographers on screen.
+    @Transactional(readOnly = true)
+    public PagedResponse<PhotographerSummaryResponse> searchPage(
+            String q, String district, String category, int page, int size) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), MAX_PAGE_SIZE);
+
+        Page<PhotographerProfile> result = photographerProfileRepository.findAll(
+                searchFilter(q, district, category), PageRequest.of(safePage, safeSize, SEARCH_ORDER));
+
+        return PagedResponse.<PhotographerSummaryResponse>builder()
+                .items(result.getContent().stream().map(this::toSummary).toList())
+                .page(safePage)
+                .size(safeSize)
+                .total(result.getTotalElements())
+                .hasMore(result.hasNext())
+                .build();
+    }
+
+    private Specification<PhotographerProfile> searchFilter(String q, String district, String category) {
         // Only ever surface accounts that are actually photographers — an
         // account whose role was changed after its profile row was created
         // (e.g. promoted to ADMIN) should stop appearing publicly, and a
-        // customer account should never appear here at all. Blue badge
-        // holders sort first, per the whole point of buying the badge.
+        // customer account should never appear here at all.
         Specification<PhotographerProfile> spec = Specification
-                .where((root, query, cb) -> {
-                    query.orderBy(cb.desc(root.get("hasBlueBadge")));
-                    return cb.equal(root.get("user").get("role"), Role.PHOTOGRAPHER);
-                });
+                .where((root, query, cb) -> cb.equal(root.get("user").get("role"), Role.PHOTOGRAPHER));
 
         // Free-text lookup by name, email, or phone — the response itself
         // never includes email/phone, so this is a "search by" key rather
@@ -74,9 +106,7 @@ public class PhotographerService {
             });
         }
 
-        return photographerProfileRepository.findAll(spec).stream()
-                .map(this::toSummary)
-                .toList();
+        return spec;
     }
 
     @Transactional(readOnly = true)

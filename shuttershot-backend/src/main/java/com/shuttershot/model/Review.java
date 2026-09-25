@@ -51,12 +51,21 @@ public class Review {
     @Column(columnDefinition = "TEXT")
     private String comment;
 
+    // Reviews are published the moment they're submitted (APPROVED); REJECTED
+    // only means an admin took an abusive review down. Photographers can reply
+    // but can never hide or remove one.
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
-    private ReviewStatus status = ReviewStatus.PENDING;
+    private ReviewStatus status = ReviewStatus.APPROVED;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(name = "photographer_reply", columnDefinition = "TEXT")
+    private String photographerReply;
+
+    @Column(name = "replied_at")
+    private LocalDateTime repliedAt;
 }

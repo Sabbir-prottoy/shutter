@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
+import LogoutButton from '../components/LogoutButton'
 import ProfilePhotoUploader from '../components/ProfilePhotoUploader'
 import RatingForm from '../components/RatingForm'
 import { useAuth } from '../context/AuthContext'
@@ -88,13 +89,7 @@ export default function AccountSettings() {
             <h1 className="font-display text-2xl font-bold text-ink">My account</h1>
             <p className="mt-1 text-ink-muted">Manage your profile photo and contact details.</p>
           </div>
-          <button
-            type="button"
-            onClick={logout}
-            className="shrink-0 text-sm text-ink-muted underline transition-colors hover:text-accent"
-          >
-            Log out
-          </button>
+          <LogoutButton onClick={logout} />
         </div>
 
         {status === 'loading' && <p className="mt-8 text-ink-muted">Loading your account…</p>}
@@ -282,7 +277,7 @@ function BookingDetailCard({ booking }) {
           {reviewed ? (
             <p className="text-sm text-ink-muted">
               <span className="font-medium text-ink">Thanks for your feedback!</span> Your rating
-              is waiting for {photographerName} to approve it.
+              is now published on {photographerName}'s profile.
             </p>
           ) : (
             <RatingForm

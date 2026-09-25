@@ -1,6 +1,7 @@
 package com.shuttershot.controller;
 
 import com.shuttershot.dto.CreateReviewRequest;
+import com.shuttershot.dto.ReviewReplyRequest;
 import com.shuttershot.dto.ReviewResponse;
 import com.shuttershot.service.ReviewService;
 import com.shuttershot.service.UserPrincipal;
@@ -37,24 +38,19 @@ public class ReviewController {
         return ResponseEntity.ok(reviewService.listApprovedByPhotographer(photographerId));
     }
 
-    // Photographer-side moderation: a photographer approving/rejecting ratings
-    // left about their own profile. Distinct from the admin-only endpoints
-    // under /api/admin/reviews/**, which remain available as a separate
-    // oversight path — not required for a rating to go live.
-    @GetMapping("/pending")
-    public ResponseEntity<List<ReviewResponse>> pendingForMe(@AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.ok(reviewService.listPendingForPhotographer(principal.getId()));
+    // A photographer's own feedback list, and their replies to it. There is
+    // deliberately no approve/reject/delete here: ratings publish on submit and
+    // only an admin can take one down.
+    @GetMapping("/mine")
+    public ResponseEntity<List<ReviewResponse>> mine(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(reviewService.listOwn(principal.getId()));
     }
 
-    @PutMapping("/{id}/approve")
-    public ResponseEntity<ReviewResponse> approveMine(
-            @PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.ok(reviewService.approveAsPhotographer(id, principal.getId()));
-    }
-
-    @PutMapping("/{id}/reject")
-    public ResponseEntity<ReviewResponse> rejectMine(
-            @PathVariable Long id, @AuthenticationPrincipal UserPrincipal principal) {
-        return ResponseEntity.ok(reviewService.rejectAsPhotographer(id, principal.getId()));
+    @PutMapping("/{id}/reply")
+    public ResponseEntity<ReviewResponse> reply(
+            @PathVariable Long id,
+            @Valid @RequestBody ReviewReplyRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(reviewService.reply(id, request.getReply(), principal.getId()));
     }
 }

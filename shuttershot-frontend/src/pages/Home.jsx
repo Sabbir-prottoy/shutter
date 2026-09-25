@@ -6,12 +6,17 @@ import SearchBar from '../components/SearchBar'
 import PhotographerCard from '../components/PhotographerCard'
 import PhotoFlipBook, { FLIP_ONLY } from '../components/PhotoFlipBook'
 import Camera3D from '../components/Camera3D'
-import { getPhotographerPortfolio, searchPhotographers } from '../services/api'
+import { getPhotographerPortfolio, searchPhotographersPage } from '../services/api'
 
-// How many featured photographers to check for a portfolio photo before
-// giving up and using the fallback. Fetched in parallel, so this can be
-// generous without turning into a slow waterfall on page load.
-const MAX_PHOTOGRAPHERS_TO_CHECK = 20
+// The home page only ever shows a handful of photographers (three avatars, six
+// featured cards), so it asks for one small portion instead of the whole list.
+// The extra ones are the pool checked for portfolio photos for the showcase.
+const HOME_PHOTOGRAPHERS = 20
+
+// Portfolios are requested a few photographers at a time and the search stops
+// as soon as there are enough photos, rather than requesting all of them up
+// front — the first photographer or two normally already have enough.
+const PORTFOLIO_BATCH = 3
 
 // Cap on how many real portfolio photos feed the flip-book showcase — it
 // cycles through them forever, so it doesn't need the whole catalog.
@@ -92,28 +97,33 @@ const STEP_BADGE_STYLES = ['bg-accent/15 text-accent', 'bg-free/15 text-free', '
 
 export default function Home() {
   const [photographers, setPhotographers] = useState([])
+  const [totalPhotographers, setTotalPhotographers] = useState(0)
   const [status, setStatus] = useState('loading')
   const [showcaseImages, setShowcaseImages] = useState([])
 
   useEffect(() => {
     let cancelled = false
 
-    searchPhotographers()
+    searchPhotographersPage({ page: 0, size: HOME_PHOTOGRAPHERS })
       .then(async (data) => {
         if (cancelled) return
-        setPhotographers(data)
+        setPhotographers(data.items)
+        setTotalPhotographers(data.total)
         setStatus('ready')
 
-        const candidates = data.slice(0, MAX_PHOTOGRAPHERS_TO_CHECK)
-        const results = await Promise.allSettled(
-          candidates.map((photographer) => getPhotographerPortfolio(photographer.id)),
-        )
-        if (cancelled) return
+        const allImages = []
+        for (let i = 0; i < data.items.length && allImages.length < MAX_SHOWCASE_IMAGES; i += PORTFOLIO_BATCH) {
+          const batch = data.items.slice(i, i + PORTFOLIO_BATCH)
+          const results = await Promise.allSettled(
+            batch.map((photographer) => getPhotographerPortfolio(photographer.id)),
+          )
+          if (cancelled) return
 
-        const allImages = results
-          .filter((result) => result.status === 'fulfilled')
-          .flatMap((result) => result.value)
-          .map((photo) => photo.imageUrl)
+          results
+            .filter((result) => result.status === 'fulfilled')
+            .flatMap((result) => result.value)
+            .forEach((photo) => allImages.push(photo.imageUrl))
+        }
 
         if (allImages.length > 0) {
           setShowcaseImages(
@@ -149,7 +159,7 @@ export default function Home() {
               ))}
             </div>
             <span className="text-sm font-medium text-free">
-              {photographers.length}+ photographers joined
+              {totalPhotographers}+ photographers joined
             </span>
           </div>
         </div>

@@ -5,7 +5,7 @@ const LINK_COLUMNS = [
     title: 'Product',
     links: [
       { label: 'Browse photographers', to: '/search' },
-      { label: 'Entertainment', to: '/entertainment' },
+      { label: 'Suggestions', to: '/suggestions' },
       { label: 'For photographers', to: '/register' },
       { label: 'Join as a customer', to: '/register/user' },
     ],

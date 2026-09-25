@@ -2,8 +2,19 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { BANGLADESH_DISTRICTS } from '../constants'
 import { triggerClickBurst } from './ClickBurstLayer'
+import PillSelect from './PillSelect'
 
 const CATEGORIES = ['wedding', 'portrait', 'event', 'landscape']
+
+const DISTRICT_OPTIONS = [
+  { value: '', label: 'Any district' },
+  ...BANGLADESH_DISTRICTS.map((name) => ({ value: name, label: name })),
+]
+
+const CATEGORY_OPTIONS = [
+  { value: '', label: 'Any category' },
+  ...CATEGORIES.map((name) => ({ value: name, label: name.charAt(0).toUpperCase() + name.slice(1) })),
+]
 
 function SearchIcon() {
   return (
@@ -28,14 +39,6 @@ function TagIcon() {
     <svg viewBox="0 0 24 24" className="h-4 w-4 shrink-0 text-ink-muted" fill="none" stroke="currentColor" strokeWidth="2">
       <path strokeLinecap="round" strokeLinejoin="round" d="M20.6 13.4 13 21a2 2 0 0 1-2.8 0L3 13.8V4h9.8l7.8 7.8a2 2 0 0 1 0 2.6z" />
       <circle cx="8" cy="8" r="1.2" fill="currentColor" stroke="none" />
-    </svg>
-  )
-}
-
-function ChevronIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0 text-ink-muted" fill="none" stroke="currentColor" strokeWidth="2">
-      <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
     </svg>
   )
 }
@@ -68,9 +71,9 @@ export default function SearchBar({
   return (
     <form
       onSubmit={handleSubmit}
-      className={`flex flex-col gap-1 rounded-card bg-surface p-1.5 shadow-card sm:flex-row sm:items-stretch sm:gap-1 sm:rounded-full ${className}`}
+      className={`relative z-30 flex flex-col gap-1 rounded-card bg-surface p-1.5 shadow-card sm:flex-row sm:items-center sm:gap-1 sm:rounded-full ${className}`}
     >
-      <div className="flex flex-1 items-center gap-2 rounded-full px-4 py-2.5 transition-colors hover:bg-surface-raised focus-within:bg-surface-raised">
+      <div className="flex flex-1 items-center gap-2 rounded-full px-4 py-2.5 transition-colors hover:bg-surface-raised focus-within:bg-surface-raised focus-within:ring-2 focus-within:ring-accent/40">
         <SearchIcon />
         <input
           type="text"
@@ -78,45 +81,25 @@ export default function SearchBar({
           onChange={(event) => setQ(event.target.value)}
           placeholder="Search by name, email, or phone"
           aria-label="Search by name, email, or phone"
-          className="w-full min-w-0 bg-transparent text-sm text-ink placeholder:text-ink-muted focus:outline-none"
+          className="bare-input w-full min-w-0 bg-transparent text-sm text-ink placeholder:text-ink-muted"
         />
       </div>
 
-      <div className="flex items-center gap-2 rounded-full px-4 py-2.5 transition-colors hover:bg-surface-raised focus-within:bg-surface-raised">
-        <PinIcon />
-        <select
-          value={district}
-          onChange={(event) => setDistrict(event.target.value)}
-          aria-label="District"
-          className="appearance-none bg-transparent pr-1 text-sm text-ink focus:outline-none"
-        >
-          <option value="">Any district</option>
-          {BANGLADESH_DISTRICTS.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-        <ChevronIcon />
-      </div>
+      <PillSelect
+        value={district}
+        onChange={setDistrict}
+        options={DISTRICT_OPTIONS}
+        icon={<PinIcon />}
+        ariaLabel="District"
+      />
 
-      <div className="flex items-center gap-2 rounded-full px-4 py-2.5 transition-colors hover:bg-surface-raised focus-within:bg-surface-raised">
-        <TagIcon />
-        <select
-          value={category}
-          onChange={(event) => setCategory(event.target.value)}
-          aria-label="Category"
-          className="appearance-none bg-transparent pr-1 text-sm text-ink focus:outline-none"
-        >
-          <option value="">Any category</option>
-          {CATEGORIES.map((option) => (
-            <option key={option} value={option}>
-              {option.charAt(0).toUpperCase() + option.slice(1)}
-            </option>
-          ))}
-        </select>
-        <ChevronIcon />
-      </div>
+      <PillSelect
+        value={category}
+        onChange={setCategory}
+        options={CATEGORY_OPTIONS}
+        icon={<TagIcon />}
+        ariaLabel="Category"
+      />
 
       <div className="p-1.5">
         <button

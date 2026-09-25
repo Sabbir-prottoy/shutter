@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { getMyPortfolio, getMyProfile } from '../services/api'
 import Footer from './Footer'
 import ThemeToggle from './ThemeToggle'
+import LogoutButton from './LogoutButton'
+import { capsuleLinkClass, mobileCapsuleLinkClass } from './sidebarLinkStyles'
 
 // How often the sidebar's pending-approval count refreshes on its own —
 // frequent enough to notice an admin decision without a manual reload,
@@ -24,14 +26,6 @@ const NAV_ITEMS = [
   { to: '/dashboard/profile', label: 'Profile Settings' },
   { to: '/dashboard/verified-badge', label: 'Verified Badge' },
 ]
-
-const desktopLinkClass = ({ isActive }) =>
-  `rounded-card px-3 py-2 text-sm font-medium transition-colors ${
-    isActive ? 'bg-surface text-accent shadow-card' : 'text-ink-muted hover:bg-surface-raised hover:text-ink'
-  }`
-
-const mobileLinkClass = ({ isActive }) =>
-  `whitespace-nowrap text-sm font-medium ${isActive ? 'text-accent' : 'text-ink-muted'}`
 
 export default function DashboardLayout() {
   const { user, logout } = useAuth()
@@ -82,7 +76,7 @@ export default function DashboardLayout() {
 
   return (
     <div className="flex min-h-screen bg-canvas">
-      <aside className="hidden w-64 shrink-0 border-r border-border p-6 sm:block">
+      <aside className="hidden w-72 shrink-0 border-r border-border p-6 sm:block">
         <Link to="/" className="font-display text-xl font-bold text-ink">
           ShutterShot
         </Link>
@@ -99,9 +93,9 @@ export default function DashboardLayout() {
           {user?.name && <span className="truncate text-sm text-ink-muted">{user.name}</span>}
         </Link>
 
-        <nav className="mt-8 flex flex-col gap-1">
+        <nav className="mt-8 flex flex-col gap-2">
           {NAV_ITEMS.map((item) => (
-            <NavLink key={item.to} to={item.to} end={item.end} className={desktopLinkClass}>
+            <NavLink key={item.to} to={item.to} end={item.end} className={capsuleLinkClass}>
               {item.label}
             </NavLink>
           ))}
@@ -138,13 +132,7 @@ export default function DashboardLayout() {
           )}
         </div>
 
-        <button
-          type="button"
-          onClick={handleLogout}
-          className="mt-8 text-sm text-ink-muted underline transition-colors hover:text-accent"
-        >
-          Log out
-        </button>
+        <LogoutButton onClick={handleLogout} className="mt-8" />
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -155,18 +143,12 @@ export default function DashboardLayout() {
             </Link>
             <div className="flex items-center gap-3">
               <ThemeToggle />
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="text-sm text-ink-muted underline transition-colors hover:text-accent"
-              >
-                Log out
-              </button>
+              <LogoutButton onClick={handleLogout} />
             </div>
           </div>
-          <nav className="mt-3 flex gap-4 overflow-x-auto pb-1">
+          <nav className="mt-3 flex gap-2 overflow-x-auto pb-1">
             {NAV_ITEMS.map((item) => (
-              <NavLink key={item.to} to={item.to} end={item.end} className={mobileLinkClass}>
+              <NavLink key={item.to} to={item.to} end={item.end} className={mobileCapsuleLinkClass}>
                 {item.label}
               </NavLink>
             ))}
@@ -180,7 +162,9 @@ export default function DashboardLayout() {
         </div>
 
         <main className="flex-1 p-6 sm:px-10 sm:pb-10 sm:pt-4">
-          <Outlet />
+          <Suspense fallback={<p className="text-ink-muted">Loading…</p>}>
+            <Outlet />
+          </Suspense>
         </main>
 
         <Footer />

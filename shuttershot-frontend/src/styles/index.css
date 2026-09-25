@@ -219,6 +219,20 @@ body {
   outline-offset: 2px;
 }
 
+/* Capsule-shaped controls draw their own focus ring (a box-shadow that follows
+   the rounded corners). This has to be unlayered like the rule above — a
+   Tailwind utility can't override it — and more specific so it wins. */
+.pill-focus:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-accent) 45%, transparent);
+}
+
+/* A text field inside a capsule: the capsule shows the focus ring, not the
+   field itself. */
+.bare-input:focus-visible {
+  outline: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

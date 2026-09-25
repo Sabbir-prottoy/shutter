@@ -10,11 +10,13 @@ import { triggerClickBurst } from './ClickBurstLayer'
 // everywhere, so clicking around the header doesn't feel repetitive.
 const linkBase = 'inline-block whitespace-nowrap text-base font-medium transition-colors'
 
-const entertainmentLinkClass = ({ isActive }) =>
+const suggestionsLinkClass = ({ isActive }) =>
   `${linkBase} hover:text-accent active:animate-nav-pulse ${isActive ? 'text-accent' : 'text-ink-muted'}`
 
+// Accent-coloured and a touch bolder than its neighbours: it's the site's main
+// action, so it should read at a glance. Underlined while on its own page.
 const findLinkClass = ({ isActive }) =>
-  `${linkBase} hover:text-accent active:animate-nav-pulse ${isActive ? 'text-accent' : 'text-ink-muted'}`
+  `${linkBase} font-semibold text-accent underline-offset-4 hover:underline active:animate-nav-pulse ${isActive ? 'underline' : ''}`
 
 const faqLinkClass = ({ isActive }) =>
   `${linkBase} hover:text-accent active:animate-nav-flicker ${isActive ? 'text-accent' : 'text-ink-muted'}`
@@ -105,8 +107,8 @@ export default function Navbar() {
               Chat with AI
             </NavLink>
 
-            <NavLink to="/entertainment" className={entertainmentLinkClass}>
-              Entertainment
+            <NavLink to="/suggestions" className={suggestionsLinkClass}>
+              Suggestions
             </NavLink>
 
             <span className="hidden sm:inline">

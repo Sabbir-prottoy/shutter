@@ -37,8 +37,8 @@ export default function RatingForm({ bookingId, photographerName, onSubmitted })
         Rate your session{photographerName ? ` with ${photographerName}` : ''}
       </p>
       <p className="mt-0.5 text-xs text-ink-muted">
-        Sent to {photographerName || 'the photographer'} for approval — it only appears on their
-        profile once they approve it.
+        Your rating is published on {photographerName ? `${photographerName}'s` : 'the photographer\'s'}{' '}
+        profile right away, and they can reply to it.
       </p>
 
       <div className="mt-2 flex gap-1" role="radiogroup" aria-label="Rating">

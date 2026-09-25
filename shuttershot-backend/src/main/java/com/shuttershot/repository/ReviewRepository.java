@@ -17,6 +17,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     List<Review> findByStatus(ReviewStatus status);
 
+    List<Review> findByPhotographerIdAndStatusOrderByCreatedAtDesc(Long photographerId, ReviewStatus status);
+
+    List<Review> findByStatusOrderByCreatedAtDesc(ReviewStatus status);
+
     boolean existsByBookingId(Long bookingId);
 
     // Batched form of existsByBookingId, for mapping a whole list of bookings

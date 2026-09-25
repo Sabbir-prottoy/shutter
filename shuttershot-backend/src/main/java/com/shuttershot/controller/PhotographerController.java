@@ -2,6 +2,7 @@ package com.shuttershot.controller;
 
 import com.shuttershot.dto.AvailabilityResponse;
 import com.shuttershot.dto.OwnPhotographerProfileResponse;
+import com.shuttershot.dto.PagedResponse;
 import com.shuttershot.dto.PackageResponse;
 import com.shuttershot.dto.PhotographerProfileResponse;
 import com.shuttershot.dto.PhotographerSummaryResponse;
@@ -47,6 +48,18 @@ public class PhotographerController {
             @RequestParam(required = false) String district,
             @RequestParam(required = false) String category) {
         return ResponseEntity.ok(photographerService.search(q, district, category));
+    }
+
+    // Paged variant of the search above, for pages that show results a portion
+    // at a time. A literal path, so "search" is never read as a photographer id.
+    @GetMapping("/search")
+    public ResponseEntity<PagedResponse<PhotographerSummaryResponse>> searchPage(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String district,
+            @RequestParam(required = false) String category,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "12") int size) {
+        return ResponseEntity.ok(photographerService.searchPage(q, district, category, page, size));
     }
 
     @GetMapping("/me")

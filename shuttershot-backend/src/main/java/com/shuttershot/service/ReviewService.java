@@ -18,6 +18,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -28,6 +29,8 @@ public class ReviewService {
     private final BookingRepository bookingRepository;
     private final PhotographerProfileRepository photographerProfileRepository;
 
+    // Published immediately: a rating goes live on the photographer's profile
+    // and counts toward their average the moment it's submitted.
     @Transactional
     public ReviewResponse create(CreateReviewRequest request) {
         Booking booking = bookingRepository.findById(request.getBookingId())
@@ -47,85 +50,71 @@ public class ReviewService {
                 .clientName(booking.getClientName())
                 .rating(request.getRating())
                 .comment(request.getComment())
-                .status(ReviewStatus.PENDING)
+                .status(ReviewStatus.APPROVED)
                 .build();
 
-        return toResponse(reviewRepository.save(review));
+        Review saved = reviewRepository.save(review);
+        recalculateRating(saved.getPhotographer());
+        return toResponse(saved);
     }
 
     @Transactional(readOnly = true)
     public List<ReviewResponse> listApprovedByPhotographer(Long photographerId) {
-        return reviewRepository.findByPhotographerIdAndStatus(photographerId, ReviewStatus.APPROVED).stream()
+        return reviewRepository
+                .findByPhotographerIdAndStatusOrderByCreatedAtDesc(photographerId, ReviewStatus.APPROVED).stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<ReviewResponse> listPending() {
-        return reviewRepository.findByStatus(ReviewStatus.PENDING).stream()
-                .map(this::toResponse)
-                .toList();
-    }
-
-    // The primary moderation path: a photographer reviewing ratings left about
-    // their own work. Admin/moderator moderation above still exists as a
-    // separate oversight path and is untouched by this.
-    @Transactional(readOnly = true)
-    public List<ReviewResponse> listPendingForPhotographer(Long authenticatedUserId) {
+    public List<ReviewResponse> listOwn(Long authenticatedUserId) {
         PhotographerProfile photographer = findOwnProfile(authenticatedUserId);
-        return reviewRepository.findByPhotographerIdAndStatus(photographer.getId(), ReviewStatus.PENDING).stream()
-                .map(this::toResponse)
-                .toList();
+        return listApprovedByPhotographer(photographer.getId());
     }
 
+    // Photographers can answer a rating about their own work, and edit that
+    // answer later, but have no way to hide or delete the rating itself.
     @Transactional
-    public ReviewResponse approveAsPhotographer(Long id, Long authenticatedUserId) {
+    public ReviewResponse reply(Long id, String reply, Long authenticatedUserId) {
         Review review = findById(id);
-        requireOwnership(review, authenticatedUserId);
-        return approve(id);
-    }
-
-    @Transactional
-    public ReviewResponse rejectAsPhotographer(Long id, Long authenticatedUserId) {
-        Review review = findById(id);
-        requireOwnership(review, authenticatedUserId);
-        return reject(id);
-    }
-
-    private void requireOwnership(Review review, Long authenticatedUserId) {
         Long ownerId = review.getPhotographer().getUser().getId();
         if (!ownerId.equals(authenticatedUserId)) {
-            throw new AccessDeniedException("You can only moderate ratings left about your own profile");
+            throw new AccessDeniedException("You can only reply to ratings left about your own profile");
         }
+        if (review.getStatus() != ReviewStatus.APPROVED) {
+            throw new InvalidRequestException("That rating is no longer published");
+        }
+
+        review.setPhotographerReply(reply.trim());
+        review.setRepliedAt(LocalDateTime.now());
+        return toResponse(review);
+    }
+
+    // Admin oversight: every published review, newest first.
+    @Transactional(readOnly = true)
+    public List<ReviewResponse> listPublished() {
+        return reviewRepository.findByStatusOrderByCreatedAtDesc(ReviewStatus.APPROVED).stream()
+                .map(this::toResponse)
+                .toList();
+    }
+
+    // Admin-only takedown for abusive or fake reviews; drops it from the
+    // photographer's public profile and average.
+    @Transactional
+    public ReviewResponse remove(Long id) {
+        Review review = findById(id);
+        if (review.getStatus() != ReviewStatus.APPROVED) {
+            throw new InvalidRequestException("That review is already removed");
+        }
+
+        review.setStatus(ReviewStatus.REJECTED);
+        recalculateRating(review.getPhotographer());
+        return toResponse(review);
     }
 
     private PhotographerProfile findOwnProfile(Long authenticatedUserId) {
         return photographerProfileRepository.findByUserId(authenticatedUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Photographer profile not found for current user"));
-    }
-
-    @Transactional
-    public ReviewResponse approve(Long id) {
-        Review review = findById(id);
-        if (review.getStatus() != ReviewStatus.PENDING) {
-            throw new InvalidRequestException("Only pending reviews can be approved");
-        }
-
-        review.setStatus(ReviewStatus.APPROVED);
-        recalculateRating(review.getPhotographer());
-
-        return toResponse(review);
-    }
-
-    @Transactional
-    public ReviewResponse reject(Long id) {
-        Review review = findById(id);
-        if (review.getStatus() != ReviewStatus.PENDING) {
-            throw new InvalidRequestException("Only pending reviews can be rejected");
-        }
-
-        review.setStatus(ReviewStatus.REJECTED);
-        return toResponse(review);
     }
 
     private void recalculateRating(PhotographerProfile photographer) {
@@ -152,6 +141,8 @@ public class ReviewService {
                 .comment(review.getComment())
                 .status(review.getStatus())
                 .createdAt(review.getCreatedAt())
+                .photographerReply(review.getPhotographerReply())
+                .repliedAt(review.getRepliedAt())
                 .build();
     }
 }
