@@ -1,16 +1,19 @@
 package com.shuttershot.controller;
 
+import com.shuttershot.dto.AccountDeletionRequestResponse;
 import com.shuttershot.dto.AccountHistoryResponse;
 import com.shuttershot.dto.AdminUserResponse;
 import com.shuttershot.dto.BlueBadgeHolderResponse;
 import com.shuttershot.dto.ConfirmPasswordRequest;
 import com.shuttershot.dto.CreateStaffAccountRequest;
 import com.shuttershot.dto.PortfolioImageResponse;
+import com.shuttershot.dto.RejectAccountDeletionRequestRequest;
 import com.shuttershot.dto.ReviewResponse;
 import com.shuttershot.dto.StaffAccountResponse;
 import com.shuttershot.dto.UpdateBlueBadgeSettingsRequest;
 import com.shuttershot.model.Role;
 import com.shuttershot.model.VerificationStatus;
+import com.shuttershot.service.AccountDeletionRequestService;
 import com.shuttershot.service.AdminUserService;
 import com.shuttershot.service.BlueBadgeService;
 import com.shuttershot.service.PortfolioService;
@@ -44,6 +47,7 @@ public class AdminController {
     private final PortfolioService portfolioService;
     private final AdminUserService adminUserService;
     private final BlueBadgeService blueBadgeService;
+    private final AccountDeletionRequestService accountDeletionRequestService;
 
     @GetMapping("/reviews")
     public ResponseEntity<List<ReviewResponse>> publishedReviews() {
@@ -104,6 +108,30 @@ public class AdminController {
             @AuthenticationPrincipal UserPrincipal principal) {
         adminUserService.justDelete(id, principal.getId());
         return ResponseEntity.noContent().build();
+    }
+
+    // Account deletion requests — self-submitted by the account holder (see
+    // AccountDeletionRequestController); approving permanently deletes the
+    // account via AdminUserService.justDelete.
+    @GetMapping("/deletion-requests")
+    public ResponseEntity<List<AccountDeletionRequestResponse>> listDeletionRequests() {
+        return ResponseEntity.ok(accountDeletionRequestService.listPending());
+    }
+
+    @PutMapping("/deletion-requests/{id}/approve")
+    public ResponseEntity<Void> approveDeletionRequest(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        accountDeletionRequestService.approve(id, principal.getId());
+        return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping("/deletion-requests/{id}/reject")
+    public ResponseEntity<AccountDeletionRequestResponse> rejectDeletionRequest(
+            @PathVariable Long id,
+            @RequestBody(required = false) RejectAccountDeletionRequestRequest request) {
+        String reason = request != null ? request.getReason() : null;
+        return ResponseEntity.ok(accountDeletionRequestService.reject(id, reason));
     }
 
     // Staff management (admin and moderator accounts) — reachable by any

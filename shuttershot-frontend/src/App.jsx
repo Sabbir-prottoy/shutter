@@ -32,9 +32,11 @@ const PackageManager = lazy(() => import('./pages/PackageManager'))
 const BookingRequests = lazy(() => import('./pages/BookingRequests'))
 const FeedbackManager = lazy(() => import('./pages/FeedbackManager'))
 const VerifiedBadge = lazy(() => import('./pages/VerifiedBadge'))
+const DeleteAccountRequest = lazy(() => import('./pages/DeleteAccountRequest'))
 const AdminPanel = lazy(() => import('./pages/AdminPanel/AdminPanel'))
 const Overview = lazy(() => import('./pages/AdminPanel/Overview'))
 const ReviewModeration = lazy(() => import('./pages/AdminPanel/ReviewModeration'))
+const DeletionRequests = lazy(() => import('./pages/AdminPanel/DeletionRequests'))
 const PhotoModeration = lazy(() => import('./pages/AdminPanel/PhotoModeration'))
 const PoseManager = lazy(() => import('./pages/AdminPanel/PoseManager'))
 const MusicManager = lazy(() => import('./pages/AdminPanel/MusicManager'))
@@ -98,6 +100,7 @@ export default function App() {
               <Route path="/dashboard/reviews" element={<FeedbackManager />} />
               <Route path="/dashboard/profile" element={<ProfileSettings />} />
               <Route path="/dashboard/verified-badge" element={<VerifiedBadge />} />
+              <Route path="/dashboard/delete-account" element={<DeleteAccountRequest />} />
             </Route>
           </Route>
 
@@ -117,6 +120,7 @@ export default function App() {
             <Route path="/admin/products" element={<ProductManager />} />
             <Route path="/admin/orders" element={<OrderManager />} />
               <Route path="/admin/users" element={<UserManagement />} />
+              <Route path="/admin/deletion-requests" element={<DeletionRequests />} />
               <Route
                 path="/admin/manage-admins"
                 element={<StaffManagement role="ADMIN" title="Manage Admin" roleLabel="admin" />}

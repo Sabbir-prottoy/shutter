@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import LogoutButton from '../components/LogoutButton'
+import DeleteAccountSection from '../components/DeleteAccountSection'
 import ProfilePhotoUploader from '../components/ProfilePhotoUploader'
 import RatingForm from '../components/RatingForm'
 import { useAuth } from '../context/AuthContext'
@@ -179,6 +180,8 @@ export default function AccountSettings() {
                 {saving ? 'Saving…' : 'Save changes'}
               </button>
             </form>
+
+            <DeleteAccountSection />
           </div>
         )}
 

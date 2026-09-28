@@ -40,7 +40,7 @@ const faqs = [
   },
   {
     q: 'How do I contact support?',
-    a: 'Email us at support@shuttershot.local and we\'ll get back to you as soon as we can.',
+    a: 'Email us at support.shuttershot@gmail.com and we\'ll get back to you as soon as we can.',
   },
 ]
 
@@ -150,8 +150,8 @@ export default function FAQ() {
           <h2 className="font-display text-lg font-bold text-ink">Still have a question?</h2>
           <p className="mt-2 text-ink-muted">
             Reach out at{' '}
-            <a href="mailto:support@shuttershot.local" className="text-accent underline">
-              support@shuttershot.local
+            <a href="mailto:support.shuttershot@gmail.com" className="text-accent underline">
+              support.shuttershot@gmail.com
             </a>{' '}
             and we'll get back to you.
           </p>

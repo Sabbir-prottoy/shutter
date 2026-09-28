@@ -59,6 +59,21 @@ export function uploadAccountPhoto(file) {
   return api.post('/account/me/photo', formData).then((res) => res.data)
 }
 
+// Account deletion requests (self-service; works for both a customer's own
+// account and a photographer's own account — the backend keys it off the
+// authenticated principal, not a role-specific path).
+export function getMyDeletionRequest() {
+  return api.get('/account/deletion-request').then((res) => res.data)
+}
+
+export function requestAccountDeletion(reason) {
+  return api.post('/account/deletion-request', { reason }).then((res) => res.data)
+}
+
+export function cancelAccountDeletionRequest() {
+  return api.delete('/account/deletion-request').then((res) => res.data)
+}
+
 // Photographer (dashboard, own profile)
 export function getMyProfile() {
   return api.get('/photographers/me').then((res) => res.data)
@@ -291,6 +306,19 @@ export function banUser(id) {
 // see AdminUserService.justDelete on the backend.
 export function justDeleteUser(id) {
   return api.delete(`/admin/users/${id}`).then((res) => res.data)
+}
+
+// Account deletion requests (admin review of self-submitted requests)
+export function getAdminDeletionRequests() {
+  return api.get('/admin/deletion-requests').then((res) => res.data)
+}
+
+export function approveDeletionRequest(id) {
+  return api.put(`/admin/deletion-requests/${id}/approve`).then((res) => res.data)
+}
+
+export function rejectDeletionRequest(id, reason) {
+  return api.put(`/admin/deletion-requests/${id}/reject`, { reason }).then((res) => res.data)
 }
 
 // Staff management (admin/moderator accounts, ADMIN-only)

@@ -84,12 +84,14 @@ detectra:
   # AI-generated imagery, with no external call. Path is relative to the
   # backend working directory, same as app.upload-dir.
   model-path: ${DETECTRA_MODEL_PATH:models/detectra-v3/model.onnx}
-  # An upload is auto-rejected only above this AI probability. Measured against
-  # a corpus of known-real photos, 0.50 would wrongly reject ~7% of genuine
-  # work and 0.90 about 2.5% — a wrongly rejected photographer is costlier here
-  # than an AI image slipping through, since an admin can still reject that
-  # later from the moderation panel.
-  reject-threshold: ${DETECTRA_REJECT_THRESHOLD:0.90}
+  # An upload is auto-rejected once Detectra is more than this confident it's
+  # AI-generated. Measured against a corpus of known-real photos, 0.50 wrongly
+  # rejects ~7% of genuine work and 0.90 about 2.5% — deliberately set to 0.50
+  # (catch anything the model leans "AI" on) since a wrongly rejected photo
+  # still reaches the photographer with the reason and stays reversible by an
+  # admin from the moderation panel, while a missed AI upload previously went
+  # straight to the photographer's public profile uncaught.
+  reject-threshold: ${DETECTRA_REJECT_THRESHOLD:0.50}
 
 duplicate-check:
   # Perceptual-hash (pHash) Hamming distance below which a new upload counts as

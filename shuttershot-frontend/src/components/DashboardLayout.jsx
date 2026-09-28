@@ -25,6 +25,7 @@ const NAV_ITEMS = [
   { to: '/dashboard/reviews', label: 'Feedback' },
   { to: '/dashboard/profile', label: 'Profile Settings' },
   { to: '/dashboard/verified-badge', label: 'Verified Badge' },
+  { to: '/dashboard/delete-account', label: 'Delete Account' },
 ]
 
 export default function DashboardLayout() {

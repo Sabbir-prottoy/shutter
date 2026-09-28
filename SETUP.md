@@ -55,7 +55,7 @@ yet), so none of them are required for a fresh clone to run:
 | `GROQ_TRANSCRIPTION_MODEL` | `whisper-large-v3-turbo` | Speech-to-text for the voice assistant. |
 | `AIORNOT_API_KEY` | *(empty)* | The admin panel's manual "Deep check with AI" on a portfolio photo. Get a key at [aiornot.com](https://aiornot.com). |
 | `DETECTRA_MODEL_PATH` | `models/detectra-v3/model.onnx` | Local ONNX model that automatically screens every portfolio upload for AI-generated imagery — no external call or key needed, just the model file present at this path. |
-| `DETECTRA_REJECT_THRESHOLD` | `0.90` | How confident the model must be before an upload is auto-rejected. |
+| `DETECTRA_REJECT_THRESHOLD` | `0.50` | How confident the model must be before an upload is auto-rejected. |
 | `DUPLICATE_MAX_DISTANCE` | `6` | How close two photos' perceptual hashes must be to count as the same picture, for catching a photo already published elsewhere on the site. |
 | `SSLCOMMERZ_STORE_ID` | *(empty)* | Booking deposits and the blue-badge payment. Sandbox credentials from [developer.sslcommerz.com](https://developer.sslcommerz.com). |
 | `SSLCOMMERZ_STORE_PASSWORD` | *(empty)* | |

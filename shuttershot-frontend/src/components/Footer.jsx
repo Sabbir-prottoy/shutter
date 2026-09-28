@@ -113,10 +113,10 @@ export default function Footer() {
           <p className="mt-3">
             If you face any trouble, or if you have any complain, please contact{' '}
             <a
-              href="mailto:admin@shuttershot.com"
+              href="mailto:support.shuttershot@gmail.com"
               className="font-medium text-blue-600 underline-offset-2 transition-colors hover:text-blue-700 hover:underline"
             >
-              admin@shuttershot.com
+              support.shuttershot@gmail.com
             </a>
           </p>
         </div>

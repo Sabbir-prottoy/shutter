@@ -19,6 +19,7 @@ const BASE_NAV_ITEMS = [
   { to: '/admin/products', label: 'Manage Products' },
   { to: '/admin/orders', label: 'Manage Orders' },
   { to: '/admin/users', label: 'User Management' },
+  { to: '/admin/deletion-requests', label: 'Delete Account Request' },
 ]
 
 // Adding or removing staff accounts, and blue-badge pricing/holders, are
