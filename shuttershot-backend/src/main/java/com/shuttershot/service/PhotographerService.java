@@ -7,14 +7,18 @@ import com.shuttershot.dto.PhotographerSummaryResponse;
 import com.shuttershot.dto.UpdatePhotographerProfileRequest;
 import com.shuttershot.exception.DuplicateResourceException;
 import com.shuttershot.exception.ResourceNotFoundException;
+import com.shuttershot.model.ImageCategory;
 import com.shuttershot.model.PhotographerProfile;
+import com.shuttershot.model.PortfolioImage;
 import com.shuttershot.model.Role;
 import com.shuttershot.model.User;
+import com.shuttershot.model.VerificationStatus;
 import com.shuttershot.repository.PhotographerProfileRepository;
 import jakarta.persistence.criteria.Predicate;
 import com.shuttershot.repository.UserRepository;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Subquery;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -97,16 +101,43 @@ public class PhotographerService {
             spec = spec.and((root, query, cb) -> cb.equal(cb.lower(root.get("baseLocation")), district.toLowerCase()));
         }
 
+        // Matched against the photographer's own published portfolio, not the
+        // unused "specialties" field (nothing in the app ever sets that one —
+        // see UpdatePhotographerProfileRequest, which accepts it but has no
+        // corresponding form field anywhere) — so a category filter that used
+        // to always return zero results now reflects what a photographer has
+        // actually shot and had approved.
         if (StringUtils.hasText(category)) {
-            String normalizedCategory = category.toLowerCase();
-            spec = spec.and((root, query, cb) -> {
-                query.distinct(true);
-                Join<PhotographerProfile, String> specialties = root.join("specialties", JoinType.LEFT);
-                return cb.equal(cb.lower(specialties), normalizedCategory);
-            });
+            ImageCategory parsedCategory = parseCategory(category);
+            if (parsedCategory == null) {
+                // Not one of the categories the site offers — matches nothing,
+                // same as before, rather than letting an invalid value 500.
+                spec = spec.and((root, query, cb) -> cb.disjunction());
+            } else {
+                spec = spec.and((root, query, cb) -> {
+                    Subquery<Long> hasApprovedPhotoInCategory = query.subquery(Long.class);
+                    var portfolio = hasApprovedPhotoInCategory.from(PortfolioImage.class);
+                    hasApprovedPhotoInCategory.select(portfolio.get("id")).where(
+                            cb.equal(portfolio.get("photographer"), root),
+                            cb.equal(portfolio.get("category"), parsedCategory),
+                            cb.equal(portfolio.get("verificationStatus"), VerificationStatus.VERIFIED));
+                    return cb.exists(hasApprovedPhotoInCategory);
+                });
+            }
         }
 
         return spec;
+    }
+
+    // The frontend only ever sends its own lowercase option values (wedding,
+    // portrait, event, landscape), but this stays defensive against a
+    // hand-crafted request with anything else.
+    private ImageCategory parseCategory(String category) {
+        try {
+            return ImageCategory.valueOf(category.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
     }
 
     @Transactional(readOnly = true)

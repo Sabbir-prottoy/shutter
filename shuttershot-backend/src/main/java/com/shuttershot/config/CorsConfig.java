@@ -32,8 +32,16 @@ public class CorsConfig {
 
         CorsConfiguration configuration = new CorsConfiguration();
         // Vite falls back to the next free port when 5173 is taken, so allow any local
-        // dev port rather than a single hardcoded one.
-        configuration.setAllowedOriginPatterns(List.of("http://localhost:*"));
+        // dev port rather than a single hardcoded one. The private-LAN ranges below let
+        // a phone on the same Wi-Fi (e.g. scanning a booking QR code, which the dev
+        // machine's LAN IP — not localhost — must be reachable for) hit this API too;
+        // these patterns only ever match private, non-routable addresses, so they're
+        // safe to leave broad for local development.
+        configuration.setAllowedOriginPatterns(List.of(
+                "http://localhost:*",
+                "http://192.168.*.*:*",
+                "http://10.*.*.*:*",
+                "http://172.*.*.*:*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);

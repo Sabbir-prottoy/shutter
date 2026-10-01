@@ -173,7 +173,14 @@ public class BookingService {
             case TOTP -> {
                 GoogleAuthenticatorKey key = GOOGLE_AUTHENTICATOR.createCredentials();
                 booking.setTotpSecret(key.getKey());
-                String otpAuthUrl = GoogleAuthenticatorQRGenerator.getOtpAuthURL(
+                // getOtpAuthURL() (no "Totp") returns a link to a third-party QR-image
+                // generator (api.qrserver.com) meant for direct <img src> use, not a
+                // payload to re-encode into our own QR code — scanning that gave an
+                // authenticator app someone else's image-service URL instead of the
+                // actual otpauth:// secret, so it could never be added to the app.
+                // getOtpAuthTotpURL() returns the raw otpauth://totp/... URI, which is
+                // what needs to go into the QR code we generate ourselves below.
+                String otpAuthUrl = GoogleAuthenticatorQRGenerator.getOtpAuthTotpURL(
                         "ShutterShot", booking.getClientEmail(), key);
                 yield BookingVerificationSetupResponse.builder()
                         .method(method)

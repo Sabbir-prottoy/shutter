@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link, NavLink, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useCart } from '../context/CartContext'
@@ -9,7 +10,7 @@ import { triggerClickBurst } from './ClickBurstLayer'
 // Each interactive nav item gets its own click animation (pulse / flicker /
 // wiggle / bounce / flash / glow) rather than one effect copy-pasted
 // everywhere, so clicking around the header doesn't feel repetitive.
-const linkBase = 'inline-block whitespace-nowrap text-base font-medium transition-colors'
+const linkBase = 'inline-block whitespace-nowrap text-sm font-medium transition-colors'
 
 const suggestionsLinkClass = ({ isActive }) =>
   `${linkBase} hover:text-accent active:animate-nav-pulse ${isActive ? 'text-accent' : 'text-ink-muted'}`
@@ -33,7 +34,7 @@ const loginLinkClass = ({ isActive }) =>
 const aiActionClass = `${linkBase} text-blue-600 underline-offset-2 hover:text-blue-700 hover:underline active:animate-nav-wiggle`
 
 const ctaButtonClass =
-  'whitespace-nowrap rounded-card bg-accent-gradient px-3 py-1.5 text-base font-medium text-white shadow-card transition-shadow hover:shadow-hover active:animate-nav-bounce'
+  'whitespace-nowrap rounded-card bg-accent-gradient px-3 py-1.5 text-sm font-medium text-white shadow-card transition-shadow hover:shadow-hover active:animate-nav-bounce'
 
 // The cart icon opens the Accessories Marketplace; the badge counts what is in the cart.
 // Already inside the marketplace, it opens the cart in place instead of reloading the
@@ -101,20 +102,89 @@ function handleHeaderClick(event) {
   }
 }
 
+// The items shared by the full desktop pill (lg and up) and the mobile
+// dropdown panel (below lg) — kept in one place so the two surfaces can
+// never drift apart. `onNavigate` closes the mobile panel after a tap;
+// it's a no-op on the desktop pill.
+function NavItems({ isAuthenticated, user, onNavigate }) {
+  return (
+    <>
+      {/* A button rather than a bare svg so the header's click-burst
+          delegation (which matches `a, button`) picks it up. */}
+      <button
+        type="button"
+        aria-label="AI features"
+        title="AI features"
+        className="inline-flex shrink-0 items-center rounded-full transition-transform hover:scale-110 active:animate-nav-pulse"
+      >
+        <AiSparkIcon className="h-[18px] w-[18px]" />
+      </button>
+
+      {/* Opens the full spoken-chat page rather than the floating
+          widget, which is still reachable from its own button. */}
+      <NavLink to="/speak" className={aiActionClass} onClick={onNavigate}>
+        Speak with AI
+      </NavLink>
+
+      {/* Opens the full chat page rather than the floating widget — the
+          widget is still reachable from its own button. */}
+      <NavLink to="/chat" className={aiActionClass} onClick={onNavigate}>
+        Chat with AI
+      </NavLink>
+
+      <NavLink to="/suggestions" className={suggestionsLinkClass} onClick={onNavigate}>
+        Suggestions
+      </NavLink>
+
+      <NavLink to="/search" className={findLinkClass} onClick={onNavigate}>
+        Find a photographer
+      </NavLink>
+
+      <NavLink to="/faq" className={faqLinkClass} onClick={onNavigate}>
+        FAQs
+      </NavLink>
+
+      {isAuthenticated ? (
+        <>
+          <CartLink />
+          <Link
+            to={ownAreaFor(user?.role)}
+            onClick={onNavigate}
+            className="rounded-card bg-accent-gradient px-3 py-1.5 text-sm font-medium text-white shadow-card transition-shadow hover:shadow-hover active:animate-nav-glow"
+          >
+            {ownAreaLabel(user?.role)}
+          </Link>
+        </>
+      ) : (
+        <>
+          <NavLink to="/admin/login" className={adminLinkClass} onClick={onNavigate}>
+            Admin portal
+          </NavLink>
+          <Link to="/register" onClick={onNavigate} className={ctaButtonClass}>
+            Join as photographer
+          </Link>
+          <CartLink />
+          <NavLink to="/login" className={loginLinkClass} onClick={onNavigate}>
+            Log in
+          </NavLink>
+        </>
+      )}
+    </>
+  )
+}
+
 export default function Navbar() {
   const { isAuthenticated, user } = useAuth()
+  const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <header className="sticky top-0 z-40 px-4 pt-4 sm:px-[30px]">
-      {/* Brand and theme toggle sit outside the pill, at the two ends of the
-          row. Laid out with flexbox rather than pinned to the corners, so the
-          pill can never grow into either of them at any width. The toggle's
-          centre lands 52px from the right edge, lining it up with the chat
-          and voice buttons in the bottom-right corner. */}
-      <div
-        onClick={handleHeaderClick}
-        className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2"
-      >
+    <header onClick={handleHeaderClick} className="sticky top-0 z-40 px-4 pt-4 sm:px-[30px]">
+      {/* Brand, cart, menu toggle and theme toggle stay on one line at every
+          width. The full link list only ever renders inline from `lg` up,
+          where it genuinely has room; below that it lives in the dropdown
+          panel opened by the toggle, instead of wrapping into a ragged
+          multi-line mess inside the pill. */}
+      <div className="flex items-center justify-between gap-x-3">
         <Link
           to="/"
           className="inline-flex shrink-0 items-center gap-2.5 whitespace-nowrap font-display text-3xl font-bold text-ink active:animate-nav-bounce"
@@ -123,76 +193,45 @@ export default function Navbar() {
           ShutterShot
         </Link>
 
-        {/* Deliberately not forced to a single line: each label already has
-            whitespace-nowrap so nothing breaks mid-phrase, and letting the row
-            wrap when it genuinely runs out of width fails far better than
-            nowrap, which would push the links outside the capsule. */}
-        <nav className="flex min-w-0 flex-wrap items-center justify-end gap-x-2 gap-y-1.5 rounded-full border border-border bg-surface/90 px-4 py-2.5 shadow-hover backdrop-blur sm:gap-x-2.5">
-            {/* A button rather than a bare svg so the header's click-burst
-                delegation (which matches `a, button`) picks it up. */}
-            <button
-              type="button"
-              aria-label="AI features"
-              title="AI features"
-              className="inline-flex shrink-0 items-center rounded-full transition-transform hover:scale-110 active:animate-nav-pulse"
-            >
-              <AiSparkIcon className="h-5 w-5" />
-            </button>
-
-            {/* Opens the full spoken-chat page rather than the floating
-                widget, which is still reachable from its own button. */}
-            <NavLink to="/speak" className={aiActionClass}>
-              Speak with AI
-            </NavLink>
-
-            {/* Opens the full chat page rather than the floating widget — the
-                widget is still reachable from its own button. */}
-            <NavLink to="/chat" className={aiActionClass}>
-              Chat with AI
-            </NavLink>
-
-            <NavLink to="/suggestions" className={suggestionsLinkClass}>
-              Suggestions
-            </NavLink>
-
-            <span className="hidden sm:inline">
-              <NavLink to="/search" className={findLinkClass}>
-                Find a photographer
-              </NavLink>
-            </span>
-
-            <NavLink to="/faq" className={faqLinkClass}>
-              FAQs
-            </NavLink>
-
-            {isAuthenticated ? (
-              <>
-              <CartLink />
-              <Link
-                to={ownAreaFor(user?.role)}
-                className="rounded-card bg-accent-gradient px-3 py-1.5 text-base font-medium text-white shadow-card transition-shadow hover:shadow-hover active:animate-nav-glow"
-              >
-                {ownAreaLabel(user?.role)}
-              </Link>
-              </>
-            ) : (
-              <>
-                <NavLink to="/admin/login" className={adminLinkClass}>
-                  Admin portal
-                </NavLink>
-                <Link to="/register" className={ctaButtonClass}>
-                  Join<span className="hidden sm:inline"> as photographer</span>
-                </Link>
-                <CartLink />
-                <NavLink to="/login" className={loginLinkClass}>
-                  Log in
-                </NavLink>
-              </>
-            )}
+        {/* Slim and compact so it stays on one line as far down as possible;
+            below that it wraps cleanly rather than overlapping, down to
+            900px — below that the dropdown menu takes over instead. */}
+        <nav className="hidden min-w-0 flex-wrap items-center justify-end gap-x-2 gap-y-2 rounded-full border border-border bg-surface/90 px-4 py-3 shadow-hover backdrop-blur min-[900px]:flex">
+          <NavItems isAuthenticated={isAuthenticated} user={user} />
         </nav>
+
+        <div className="flex shrink-0 items-center gap-2 min-[900px]:hidden">
+          <CartLink />
+          <button
+            type="button"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((open) => !open)}
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-ink-muted transition-colors hover:border-accent hover:text-accent"
+          >
+            <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true">
+              {menuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 6l12 12M18 6L6 18" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 12h16M4 17h16" />
+              )}
+            </svg>
+          </button>
+        </div>
 
         <ThemeToggle className="h-11 w-11 bg-surface/90 shadow-card backdrop-blur" />
       </div>
+
+      {menuOpen && (
+        <>
+          {/* Click-outside-to-close, same pattern used for the portfolio
+              manager's card menu. */}
+          <div className="fixed inset-0 z-40 min-[900px]:hidden" onClick={() => setMenuOpen(false)} />
+          <div className="relative z-50 mt-3 flex flex-col items-start gap-3 rounded-card border border-border bg-surface/95 p-5 shadow-hover backdrop-blur min-[900px]:hidden">
+            <NavItems isAuthenticated={isAuthenticated} user={user} onNavigate={() => setMenuOpen(false)} />
+          </div>
+        </>
+      )}
     </header>
   )
 }
