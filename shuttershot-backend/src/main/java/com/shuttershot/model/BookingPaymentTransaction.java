@@ -21,7 +21,7 @@ import org.hibernate.annotations.ColumnDefault;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-// One row per SSLCommerz checkout session opened for a booking's 10% deposit.
+// One row per SSLCommerz checkout session opened for a booking's deposit.
 // Mirrors BlueBadgeTransaction's lifecycle: created PENDING when checkout starts,
 // flipped to VALID only after SSLCommerz's validation API confirms the payment
 // server-side. See BookingService for how a VALID transaction marks the booking

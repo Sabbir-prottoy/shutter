@@ -11,11 +11,13 @@ import com.shuttershot.dto.RejectAccountDeletionRequestRequest;
 import com.shuttershot.dto.ReviewResponse;
 import com.shuttershot.dto.StaffAccountResponse;
 import com.shuttershot.dto.UpdateBlueBadgeSettingsRequest;
+import com.shuttershot.dto.UpdateBookingMoneySettingsRequest;
 import com.shuttershot.model.Role;
 import com.shuttershot.model.VerificationStatus;
 import com.shuttershot.service.AccountDeletionRequestService;
 import com.shuttershot.service.AdminUserService;
 import com.shuttershot.service.BlueBadgeService;
+import com.shuttershot.service.BookingMoneyService;
 import com.shuttershot.service.PortfolioService;
 import com.shuttershot.service.ReviewService;
 import com.shuttershot.service.UserPrincipal;
@@ -48,6 +50,7 @@ public class AdminController {
     private final AdminUserService adminUserService;
     private final BlueBadgeService blueBadgeService;
     private final AccountDeletionRequestService accountDeletionRequestService;
+    private final BookingMoneyService bookingMoneyService;
 
     @GetMapping("/reviews")
     public ResponseEntity<List<ReviewResponse>> publishedReviews() {
@@ -236,5 +239,21 @@ public class AdminController {
             @AuthenticationPrincipal UserPrincipal principal) {
         blueBadgeService.revoke(userId, principal.getId());
         return ResponseEntity.noContent().build();
+    }
+
+    // Booking money — the deposit percentage a client pays when booking a
+    // photographer. Main-admin-only, per BookingMoneyService.
+    @GetMapping("/booking-money/settings")
+    public ResponseEntity<Map<String, BigDecimal>> getBookingMoneySettings(
+            @AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(Map.of("percent", bookingMoneyService.getPercentForAdmin(principal.getId())));
+    }
+
+    @PutMapping("/booking-money/settings")
+    public ResponseEntity<Map<String, BigDecimal>> updateBookingMoneyPercent(
+            @Valid @RequestBody UpdateBookingMoneySettingsRequest request,
+            @AuthenticationPrincipal UserPrincipal principal) {
+        BigDecimal percent = bookingMoneyService.updatePercent(request.getPercent(), principal.getId());
+        return ResponseEntity.ok(Map.of("percent", percent));
     }
 }

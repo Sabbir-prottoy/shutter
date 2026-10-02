@@ -31,6 +31,7 @@ const MAIN_ADMIN_ONLY_NAV_ITEMS = [
   { to: '/admin/photographer-history', label: 'Photographers Profile History' },
   { to: '/admin/user-history', label: 'Users Profile History' },
   { to: '/admin/blue-badge', label: 'Blue Badge Management' },
+  { to: '/admin/booking-money', label: 'Booking Money' },
 ]
 
 export default function AdminLayout() {

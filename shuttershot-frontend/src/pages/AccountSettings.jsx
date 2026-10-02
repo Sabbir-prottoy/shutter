@@ -228,6 +228,7 @@ function BookingDetailCard({ booking }) {
     status: bookingStatus,
     otpVerified,
     depositAmount,
+    depositPercent,
     depositPaid,
     reviewed: initiallyReviewed,
   } = booking
@@ -260,7 +261,7 @@ function BookingDetailCard({ booking }) {
         </div>
         {depositAmount != null && (
           <div className="flex gap-1.5">
-            <dt>Deposit (10%):</dt>
+            <dt>Deposit ({Number(depositPercent)}%):</dt>
             <dd className={depositPaid ? 'text-free' : 'text-ink'}>
               {currencyFormatter.format(depositAmount)} {depositPaid ? '— paid' : '— not paid yet'}
             </dd>

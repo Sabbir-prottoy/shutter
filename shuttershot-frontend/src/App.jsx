@@ -47,6 +47,7 @@ const UserManagement = lazy(() => import('./pages/AdminPanel/UserManagement'))
 const StaffManagement = lazy(() => import('./pages/AdminPanel/StaffManagement'))
 const AccountHistory = lazy(() => import('./pages/AdminPanel/AccountHistory'))
 const BlueBadgeManagement = lazy(() => import('./pages/AdminPanel/BlueBadgeManagement'))
+const BookingMoney = lazy(() => import('./pages/AdminPanel/BookingMoney'))
 const FAQ = lazy(() => import('./pages/FAQ'))
 const Login = lazy(() => import('./pages/Login'))
 const Register = lazy(() => import('./pages/Register'))
@@ -156,6 +157,7 @@ export default function App() {
                 }
               />
               <Route path="/admin/blue-badge" element={<BlueBadgeManagement />} />
+              <Route path="/admin/booking-money" element={<BookingMoney />} />
             </Route>
           </Route>
 

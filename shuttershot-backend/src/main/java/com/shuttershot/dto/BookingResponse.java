@@ -35,6 +35,7 @@ public class BookingResponse {
     private boolean otpVerified;
     private BookingVerificationMethod verificationMethod;
     private BigDecimal depositAmount;
+    private BigDecimal depositPercent;
     private boolean depositPaid;
     // True once a rating has been submitted for this booking (whatever its
     // moderation status) — lets the client hide the "rate this session" form

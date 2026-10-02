@@ -167,6 +167,7 @@ function BookingCard({ booking, pkg, updating, onStatusChange, onShowQr }) {
     otpVerified,
     verificationMethod,
     depositAmount,
+    depositPercent,
     depositPaid,
   } = booking
 
@@ -199,7 +200,7 @@ function BookingCard({ booking, pkg, updating, onStatusChange, onShowQr }) {
         </div>
         {depositAmount != null && (
           <div className="flex gap-1.5">
-            <dt>Deposit (10%):</dt>
+            <dt>Deposit ({Number(depositPercent)}%):</dt>
             <dd className={depositPaid ? 'text-free' : 'text-ink'}>
               ৳{Number(depositAmount).toLocaleString()} {depositPaid ? '— paid' : '— not paid yet'}
             </dd>
@@ -220,7 +221,9 @@ function BookingCard({ booking, pkg, updating, onStatusChange, onShowQr }) {
         </p>
       )}
       {bookingStatus === 'PENDING' && otpVerified && !depositPaid && (
-        <p className="mt-3 text-sm text-ink-muted">Waiting for the client to pay their 10% deposit.</p>
+        <p className="mt-3 text-sm text-ink-muted">
+          Waiting for the client to pay their {Number(depositPercent)}% deposit.
+        </p>
       )}
 
       {bookingStatus === 'PENDING' && !otpVerified && verificationMethod === 'QR_CODE' && (

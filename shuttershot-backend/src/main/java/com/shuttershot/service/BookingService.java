@@ -50,7 +50,7 @@ import java.util.UUID;
 public class BookingService {
 
     private static final Logger log = LoggerFactory.getLogger(BookingService.class);
-    private static final BigDecimal DEPOSIT_RATE = new BigDecimal("0.10");
+    private static final BigDecimal ONE_HUNDRED = new BigDecimal("100");
     private static final GoogleAuthenticator GOOGLE_AUTHENTICATOR = new GoogleAuthenticator();
 
     private final BookingRepository bookingRepository;
@@ -63,6 +63,7 @@ public class BookingService {
     private final BookingPaymentTransactionRepository bookingPaymentTransactionRepository;
     private final SSLCommerzService sslCommerzService;
     private final ReviewRepository reviewRepository;
+    private final BookingMoneyService bookingMoneyService;
 
     @Value("${app.base-url}")
     private String backendBaseUrl;
@@ -98,7 +99,11 @@ public class BookingService {
                         .orElseThrow(() -> new ResourceNotFoundException("User not found"))
                 : null;
 
-        BigDecimal depositAmount = pkg.getPrice().multiply(DEPOSIT_RATE).setScale(2, RoundingMode.HALF_UP);
+        // Fixed here, at booking time: a later change to the rate never alters
+        // what an existing booking owes.
+        BigDecimal depositPercent = bookingMoneyService.getCurrentPercent();
+        BigDecimal depositAmount = pkg.getPrice().multiply(depositPercent)
+                .divide(ONE_HUNDRED, 2, RoundingMode.HALF_UP);
 
         Booking booking = Booking.builder()
                 .photographer(photographer)
@@ -112,6 +117,7 @@ public class BookingService {
                 .status(BookingStatus.PENDING)
                 .otpVerified(false)
                 .depositAmount(depositAmount)
+                .depositPercent(depositPercent)
                 .depositPaid(false)
                 .build();
         booking = bookingRepository.save(booking);
@@ -263,7 +269,7 @@ public class BookingService {
         return toResponse(findById(bookingId));
     }
 
-    // Opens an SSLCommerz checkout session for the booking's 10% deposit and
+    // Opens an SSLCommerz checkout session for the booking's deposit and
     // hands back the GatewayPageURL to redirect the browser to. The deposit is
     // only marked paid once SSLCommerz calls back to /payment/success and that
     // payment is re-validated server-side — see confirmDepositPayment below.
@@ -399,7 +405,7 @@ public class BookingService {
                 throw new InvalidRequestException("Cannot confirm a booking whose contact has not been verified");
             }
             if (!booking.isDepositPaid()) {
-                throw new InvalidRequestException("Cannot confirm a booking until the 10% deposit has been paid");
+                throw new InvalidRequestException("Cannot confirm a booking until the deposit has been paid");
             }
         }
 
@@ -462,6 +468,7 @@ public class BookingService {
                 .otpVerified(booking.isOtpVerified())
                 .verificationMethod(booking.getVerificationMethod())
                 .depositAmount(booking.getDepositAmount())
+                .depositPercent(booking.getDepositPercent())
                 .depositPaid(booking.isDepositPaid())
                 .reviewed(reviewed)
                 .createdAt(booking.getCreatedAt())

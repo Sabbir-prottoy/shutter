@@ -705,12 +705,12 @@ export default function BookingFlow() {
               <>
                 <h2 className="font-display text-2xl font-bold text-ink">Pay your deposit</h2>
                 <p className="mt-3 text-ink-muted">
-                  To confirm your request, pay a 10% deposit now. The rest is settled directly with{' '}
+                  To confirm your request, pay a {Number(booking.depositPercent)}% deposit now. The rest is settled directly with{' '}
                   {profile.name}.
                 </p>
 
                 <div className="mt-6 flex items-center justify-between rounded-card border border-border bg-surface-raised px-4 py-3">
-                  <span className="text-sm text-ink-muted">Deposit due (10%)</span>
+                  <span className="text-sm text-ink-muted">Deposit due ({Number(booking.depositPercent)}%)</span>
                   <span className="font-display text-xl font-bold text-ink">
                     ৳{Number(booking.depositAmount).toLocaleString()}
                   </span>

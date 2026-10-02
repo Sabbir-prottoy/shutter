@@ -98,10 +98,21 @@ public class Booking {
     @Column(name = "totp_secret")
     private String totpSecret;
 
-    // 10% of the package price, charged via SSLCommerz before a booking can be
-    // confirmed. Null only for bookings created before this feature existed.
+    // The deposit percentage of the package price, charged via SSLCommerz before
+    // a booking can be confirmed. Null only for bookings created before this
+    // feature existed.
     @Column(name = "deposit_amount", precision = 10, scale = 2)
     private BigDecimal depositAmount;
+
+    // The percentage depositAmount was calculated at. The rate is admin-
+    // configurable (see BookingMoneyService), so it can differ between bookings:
+    // storing it here keeps what the UI says about an existing booking accurate
+    // after the rate changes. The column default backfills bookings made before
+    // the rate was configurable, when it was always 10; BookingService.create()
+    // sets it explicitly for every new booking.
+    @Column(name = "deposit_percent", precision = 5, scale = 2)
+    @ColumnDefault("10")
+    private BigDecimal depositPercent;
 
     // Defaults to true at the column level so the migration doesn't retroactively
     // block existing bookings from being confirmed; BookingService.create() always

@@ -388,6 +388,15 @@ export function revokeBlueBadge(userId) {
   return api.put(`/admin/blue-badge/holders/${userId}/revoke`).then((res) => res.data)
 }
 
+// Booking money — the deposit percentage charged when booking a photographer (admin, main-admin-only)
+export function getBookingMoneySettings() {
+  return api.get('/admin/booking-money/settings').then((res) => res.data)
+}
+
+export function updateBookingMoneySettings(percent) {
+  return api.put('/admin/booking-money/settings', { percent }).then((res) => res.data)
+}
+
 // Admin overview (analytics dashboard, any ADMIN/MODERATOR)
 export function getAdminOverview() {
   return api.get('/admin/overview').then((res) => res.data)
