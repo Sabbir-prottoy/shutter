@@ -9,15 +9,15 @@ frontend (port `5173`). You'll need Docker, JDK 17+, and Node 18+.
 cd shuttershot-backend
 ```
 
-**Start Postgres:**
+**Start Postgres** (the compose file lives in `shuttershot-database/`):
 
 ```bash
-docker compose up -d
+docker compose -f ../shuttershot-database/docker-compose.yml up -d
 ```
 
 This brings up a `postgres:16-alpine` container with database `shuttershot`,
 user/password `postgres`/`postgres`, exposed on host port **5433** (not the
-default 5432 — pick a different host port in `docker-compose.yml` if 5433 is
+default 5432 — pick a different host port in `shuttershot-database/docker-compose.yml` if 5433 is
 already taken on your machine, and update `DB_URL` to match).
 
 **Configure environment (optional):**

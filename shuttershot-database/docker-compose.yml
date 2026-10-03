@@ -1,3 +1,6 @@
+# Project name pinned so the existing data volume (shuttershot-backend_shuttershot-postgres-data) keeps being used
+name: shuttershot-backend
+
 services:
   postgres:
     image: postgres:16-alpine
